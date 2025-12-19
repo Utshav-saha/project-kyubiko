@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Imperial+Script&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+@import "tailwindcss";
+@plugin "daisyui";
+
+@layer utilities {
+  .bg-noise {
+    /* Fixed the SVG data URL quoting */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+
+  .animate-scroll-text {
+    animation: scroll-text 20s linear infinite;
+  }
+
+  @keyframes scroll-text {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
+}
+
+@theme {
+  /* Use dashes (-) instead of underscores (_) */
+  --font-playfair: 'Playfair Display', serif;
+  --font-dmsans: 'DM Sans', sans-serif;
+  --font-imperial: 'Imperial Script', cursive;
+
+  --color-dark-chocolate: #2C241F;
+  --color-old-paper: #E8E2D9;
+  --color-accent-orange: #F27D52;
+  --color-accent-yellow: #FCD955;
+  --color-dark: #1A1A1A;
+}
