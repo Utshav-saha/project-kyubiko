@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Persian Coins",
+    "image": "src/assets/persian_coin.png",
+    "description": "These gold coins, known as Darics, were minted by the Achaemenid Empire and featured the distinct image of a kneeling archer to standardize trade across the ancient world."
+  },
+  {
+    "name": "Greek Goetia",
+    "image": "src/assets/greek_goetia.png",
+    "description": "Historically referring to ancient low magic, this practice involves the invocation of spirits and is best known today through the demonological spells of the Lesser Key of Solomon."
+  },
+  {
+    "name": "Flooki's Compass",
+    "image": "src/assets/compass.png",
+    "description": "Popularized by the character Floki in the series Vikings, this primitive navigation tool uses a translucent sunstone to reveal the sun's position through thick clouds for ocean travel."
+  },
+  {
+    "name": "Henry Dawson",
+    "image": "src/assets/dawson.png",
+    "description": "This refers to a prized 19th-century oil painting by British artist Henry Dawson, renowned for his atmospheric marine scenes and vibrant landscapes."
+  }
+]

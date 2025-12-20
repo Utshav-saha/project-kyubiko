@@ -1,6 +1,8 @@
-import React from 'react';
+import React from "react";
+import Card from "../components/common/Card.jsx";
+import { useEffect, useState } from "react";
 
-const Landing = () =>{
+const Landing = () => {
   const slides = [
     {
       id: 1,
@@ -24,6 +26,18 @@ const Landing = () =>{
       bgColor: "bg-[#4DB6AC]",
     },
   ];
+
+
+  const [artefacts, setArtefacts] = useState([]);
+
+  useEffect(() => {
+    fetch("/artefacts.json")
+      .then((response) => response.json())
+      .then((data) => setArtefacts(data))
+      .catch((error) => console.error("Error fetching artefacts:", error));
+  }, []);
+
+  
 
   return (
     <div className="relative min-h-screen bg-old-paper font-dmsans text-dark">
@@ -282,7 +296,7 @@ const Landing = () =>{
 
           {/* Top Artefacts items */}
 
-          <section className="w-full min-h-96 bg-dark-chocolate">
+          <section className="w-full min-h-150 bg-dark-chocolate">
             <div className="grid grid-cols-1 lg:grid-cols-4  gap-4 p-5">
               <div className="col-span-1 lg:col-span-2 mt-10">
                 <span className="font-playfair text-white text-4xl p-5 block sm:inline">
@@ -308,16 +322,28 @@ const Landing = () =>{
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4  gap-4 p-5">
-                    
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 p-5 justify-items-center">
+              
+                {
+                  artefacts.map((artefact, index)=>(
+                    <Card
+                    key={index}
+                    name={artefact.name}
+                    image={artefact.image}
+                    description={artefact.description}
 
+                    
+                    />
+                  ))
+                }
+              
             </div>
           </section>
         </main>
       </div>
     </div>
   );
-}
+};
 
 export default Landing;
 
