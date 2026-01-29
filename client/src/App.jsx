@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Search from "./pages/Search";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
+import MyMuseums from "./pages/MyMuseums";
 
 gsap.registerPlugin(useGSAP);
 
@@ -11,7 +12,10 @@ gsap.registerPlugin(useGSAP);
 function App() {
   return (
     <>
-      <Search />
+      <MyMuseums/>
+      {/* <Search /> */}
+      {/* <Login /> */}
+      {/* <Landing /> */}
     </>
   );
 }
