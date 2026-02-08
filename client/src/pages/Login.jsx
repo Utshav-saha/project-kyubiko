@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import mockSignupAPI from "../mockAuth.js";
+import { API_URL } from "../config";
 
 export default function Login() {
   const [action, setAction] = useState("Create an Account");
@@ -9,6 +9,7 @@ export default function Login() {
     email: "",
     pass: "",
     confirmPass: "",
+    role: "curator",
   });
   const [errors, setErrors] = useState({});
 
@@ -75,11 +76,29 @@ export default function Login() {
     setErrors({});
     setIsLoading(true);
 
+    const url =
+      action === "Create an Account"
+        ? `${API_URL}/auth/register`
+        : `${API_URL}/auth/login`;
+
     try {
-      const response = await mockSignupAPI(data, action);
-      alert(response);
-    } catch (errorMessage) {
-      alert(errorMessage);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const parseRes = await response.json();
+
+      if (parseRes.token) {
+        localStorage.setItem("token", parseRes.token);
+        console.log("Token stored successfully:", parseRes.token);
+        alert("Successful!");
+      } else {
+        alert(parseRes);
+      }
+    } catch (err) {
+      console.error(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -122,7 +141,9 @@ export default function Login() {
               className="cursor-pointer"
               onClick={() => {
                 setAction(
-                  action === "Create an Account" ? "Login" : "Create an Account"
+                  action === "Create an Account"
+                    ? "Login"
+                    : "Create an Account",
                 );
               }}
             >
@@ -198,13 +219,18 @@ export default function Login() {
                 </div>
                 <input
                   type="radio"
-                  name="radio-8"
+                  name="role"
+                  value="curator"
+                  checked={data.role === "curator"}
+                  onChange={handleChange}
                   className="radio radio-warning"
-                  defaultChecked
                 />
                 <input
                   type="radio"
-                  name="radio-8"
+                  name="role"
+                  value="manager"
+                  checked={data.role === "manager"}
+                  onChange={handleChange}
                   className="radio radio-warning mx-2"
                 />
 

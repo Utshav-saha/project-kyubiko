@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Link } from "react-router-dom";
 
 import Card from "../components/common/Card.jsx";
 
@@ -183,20 +184,20 @@ const Landing = () => {
             <div className="navbar-center hidden lg:flex">
               <ul className="menu menu-horizontal px-1 text-white">
                 <li>
-                  <a>Home</a>
+                  <Link to="/">Home</Link>
                 </li>
                 <li>
-                  <a>Explore</a>
+                  <Link to="/login">Explore</Link>
                 </li>
                 <li>
-                  <a>Archive</a>
+                  <Link to="/login">Archive</Link>
                 </li>
               </ul>
             </div>
             <div className="navbar-end">
-              <a className="btn btn-dash border-white text-white mr-5">
+              <Link to="/login" className="btn btn-dash border-white text-white mr-5">
                 Login / Sign up
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -234,9 +235,12 @@ const Landing = () => {
               </h1>
 
               <div className="hero-text-anim flex flex-col sm:flex-row items-start sm:items-center gap-8">
-                <button className="bg-[#FFE55C] text-black px-8 py-3 font-dmsans font-bold uppercase tracking-wider hover:bg-[#ffd633] transition-colors">
-                  Get Started
+                <Link to="/login">
+                    <button className="bg-[#FFE55C] text-black px-8 py-3 font-dmsans font-bold uppercase tracking-wider hover:bg-[#ffd633] transition-colors">
+                 Get Started
                 </button>
+                </Link>
+                
                 <p className="max-w-xs text-sm text-gray-300 border-l border-gray-500 pl-4 leading-relaxed font-dmsans">
                   History is an umbrella of past events as the memory,
                   discovery, collection, and interpretation of events.

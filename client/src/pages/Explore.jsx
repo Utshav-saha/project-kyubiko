@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
-import { Search, Filter, ChevronDown, ChevronUp, X, MapPin } from 'lucide-react';
+import { Search, Filter, ChevronDown, X, MapPin } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Card from '../components/common/Card';
@@ -46,9 +46,142 @@ function MapController({ center }) {
   return null;
 }
 
+// MOVED OUTSIDE: FilterPanel is now a standalone component receiving props
+const FilterPanel = ({ 
+  isMobile = false, 
+  resetFilters, 
+  museumCategory, setMuseumCategory,
+  country, setCountry,
+  artifactCategory, setArtifactCategory,
+  artifactRegion, setArtifactRegion,
+  dateRange, setDateRange,
+  scrollToResults,
+  setIsMobileFilterOpen
+}) => (
+  <div className={`${isMobile ? 'p-4' : 'p-5'}`}>
+    <div className="flex justify-between items-center mb-5">
+      <h3 className="font-playfair text-lg font-bold text-dark-chocolate flex items-center gap-2">
+        <Filter size={18} className="text-accent-orange" />
+        Filters
+      </h3>
+      <button 
+        onClick={resetFilters}
+        className="text-xs text-accent-orange hover:underline font-medium transition-colors"
+      >
+        Reset All
+      </button>
+    </div>
+
+    {/* Museum Filters */}
+    <div className="mb-5">
+      <p className="text-xs uppercase tracking-widest text-dark-chocolate/60 font-bold mb-3">Museum Filters</p>
+      
+      <div className="space-y-3">
+        <div>
+          <label className="text-sm font-medium text-dark-chocolate mb-1 block">Category</label>
+          <select 
+            value={museumCategory}
+            onChange={(e) => setMuseumCategory(e.target.value)}
+            className="select select-sm w-full bg-white border border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none"
+          >
+            {museumCategories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        </div>
+        
+        <div>
+          <label className="text-sm font-medium text-dark-chocolate mb-1 block">Country/State</label>
+          <select 
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            className="select select-sm w-full bg-white border border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none"
+          >
+            {countries.map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    {/* Divider */}
+    <div className="border-t border-dark-chocolate/10 my-4"></div>
+
+    {/* Artifact Filters */}
+    <div className="mb-5">
+      <p className="text-xs uppercase tracking-widest text-dark-chocolate/60 font-bold mb-3">Artifact Filters</p>
+      
+      <div className="space-y-3">
+        <div>
+          <label className="text-sm font-medium text-dark-chocolate mb-1 block">Category</label>
+          <select 
+            value={artifactCategory}
+            onChange={(e) => setArtifactCategory(e.target.value)}
+            className="select select-sm w-full bg-white border border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none"
+          >
+            {artifactCategories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        </div>
+        
+        <div>
+          <label className="text-sm font-medium text-dark-chocolate mb-1 block">Region</label>
+          <select 
+            value={artifactRegion}
+            onChange={(e) => setArtifactRegion(e.target.value)}
+            className="select select-sm w-full bg-white border border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none"
+          >
+            {artifactRegions.map(r => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Date Range Slider */}
+        <div>
+          <label className="text-sm font-medium text-dark-chocolate mb-2 block">
+            Date Period: {dateRange.start < 0 ? `${Math.abs(dateRange.start)} BC` : `${dateRange.start} AD`} - {dateRange.end} AD
+          </label>
+          <div className="space-y-2">
+            <input
+              type="range"
+              min="-3000"
+              max="2024"
+              value={dateRange.start}
+              onChange={(e) => setDateRange(prev => ({ ...prev, start: parseInt(e.target.value) }))}
+              className="range range-xs range-warning w-full"
+            />
+            <input
+              type="range"
+              min="-3000"
+              max="2024"
+              value={dateRange.end}
+              onChange={(e) => setDateRange(prev => ({ ...prev, end: parseInt(e.target.value) }))}
+              className="range range-xs range-warning w-full"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* View Results Button */}
+    <button 
+      onClick={() => {
+        scrollToResults();
+        if (isMobile && setIsMobileFilterOpen) setIsMobileFilterOpen(false);
+      }}
+      className="btn w-full bg-accent-yellow hover:bg-accent-orange text-dark-chocolate font-bold border-none shadow-md hover:shadow-lg transition-all duration-300"
+    >
+      View Results
+      <ChevronDown size={18} />
+    </button>
+  </div>
+);
+
 export default function Explore() {
   const [artifacts, setArtifacts] = useState([]);
-  const [filteredArtifacts, setFilteredArtifacts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(true);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -71,13 +204,12 @@ export default function Explore() {
       .then(res => res.json())
       .then(data => {
         setArtifacts(data);
-        setFilteredArtifacts(data);
       })
       .catch(err => console.error('Error loading artifacts:', err));
   }, []);
 
-  // Filter artifacts based on search and filters
-  useEffect(() => {
+  // Filter artifacts
+  const filteredArtifacts = useMemo(() => {
     let filtered = artifacts;
     
     if (searchQuery) {
@@ -86,57 +218,27 @@ export default function Explore() {
         artifact.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-    
-    setFilteredArtifacts(filtered);
+    return filtered;
   }, [searchQuery, artifacts, museumCategory, country, artifactCategory, artifactRegion, dateRange]);
 
-  // GSAP Animations for cards
+  // GSAP Animations
   useEffect(() => {
     if (filteredArtifacts.length > 0 && cardsRef.current.length > 0) {
-      // Kill existing scroll triggers
       ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-
-      // Animate section title
       gsap.fromTo(
         '.results-title',
         { opacity: 0, y: 50 },
         {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: '.results-section',
-            start: 'top 80%',
-            toggleActions: 'play none none reverse',
-          },
+          opacity: 1, y: 0, duration: 0.8, ease: 'power3.out',
+          scrollTrigger: { trigger: '.results-section', start: 'top 80%', toggleActions: 'play none none reverse' },
         }
       );
-
-      // Staggered card animations
       cardsRef.current.forEach((card, index) => {
         if (card) {
-          gsap.fromTo(
-            card,
-            { 
-              opacity: 0, 
-              y: 80,
-              scale: 0.9,
-              rotateX: 15,
-            },
-            {
-              opacity: 1,
-              y: 0,
-              scale: 1,
-              rotateX: 0,
-              duration: 0.8,
-              delay: index * 0.15,
-              ease: 'power3.out',
-              scrollTrigger: {
-                trigger: card,
-                start: 'top 85%',
-                toggleActions: 'play none none reverse',
-              },
+          gsap.fromTo(card,
+            { opacity: 0, y: 80, scale: 0.9, rotateX: 15 },
+            { opacity: 1, y: 0, scale: 1, rotateX: 0, duration: 0.8, delay: index * 0.15, ease: 'power3.out',
+              scrollTrigger: { trigger: card, start: 'top 85%', toggleActions: 'play none none reverse' }
             }
           );
         }
@@ -162,133 +264,20 @@ export default function Explore() {
     setMapCenter([museum.lat, museum.lng]);
   };
 
-  // Filter panel component (reusable for desktop and mobile)
-  const FilterPanel = ({ isMobile = false }) => (
-    <div className={`${isMobile ? 'p-4' : 'p-5'}`}>
-      <div className="flex justify-between items-center mb-5">
-        <h3 className="font-playfair text-lg font-bold text-dark-chocolate flex items-center gap-2">
-          <Filter size={18} className="text-accent-orange" />
-          Filters
-        </h3>
-        <button 
-          onClick={resetFilters}
-          className="text-xs text-accent-orange hover:underline font-medium transition-colors"
-        >
-          Reset All
-        </button>
-      </div>
-
-      {/* Museum Filters */}
-      <div className="mb-5">
-        <p className="text-xs uppercase tracking-widest text-dark-chocolate/60 font-bold mb-3">Museum Filters</p>
-        
-        <div className="space-y-3">
-          <div>
-            <label className="text-sm font-medium text-dark-chocolate mb-1 block">Category</label>
-            <select 
-              value={museumCategory}
-              onChange={(e) => setMuseumCategory(e.target.value)}
-              className="select select-sm w-full bg-white border border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none"
-            >
-              {museumCategories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium text-dark-chocolate mb-1 block">Country/State</label>
-            <select 
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              className="select select-sm w-full bg-white border border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none"
-            >
-              {countries.map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Divider */}
-      <div className="border-t border-dark-chocolate/10 my-4"></div>
-
-      {/* Artifact Filters */}
-      <div className="mb-5">
-        <p className="text-xs uppercase tracking-widest text-dark-chocolate/60 font-bold mb-3">Artifact Filters</p>
-        
-        <div className="space-y-3">
-          <div>
-            <label className="text-sm font-medium text-dark-chocolate mb-1 block">Category</label>
-            <select 
-              value={artifactCategory}
-              onChange={(e) => setArtifactCategory(e.target.value)}
-              className="select select-sm w-full bg-white border border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none"
-            >
-              {artifactCategories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium text-dark-chocolate mb-1 block">Region</label>
-            <select 
-              value={artifactRegion}
-              onChange={(e) => setArtifactRegion(e.target.value)}
-              className="select select-sm w-full bg-white border border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none"
-            >
-              {artifactRegions.map(r => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Date Range Slider */}
-          <div>
-            <label className="text-sm font-medium text-dark-chocolate mb-2 block">
-              Date Period: {dateRange.start < 0 ? `${Math.abs(dateRange.start)} BC` : `${dateRange.start} AD`} - {dateRange.end} AD
-            </label>
-            <div className="space-y-2">
-              <input
-                type="range"
-                min="-3000"
-                max="2024"
-                value={dateRange.start}
-                onChange={(e) => setDateRange(prev => ({ ...prev, start: parseInt(e.target.value) }))}
-                className="range range-xs range-warning w-full"
-              />
-              <input
-                type="range"
-                min="-3000"
-                max="2024"
-                value={dateRange.end}
-                onChange={(e) => setDateRange(prev => ({ ...prev, end: parseInt(e.target.value) }))}
-                className="range range-xs range-warning w-full"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* View Results Button */}
-      <button 
-        onClick={() => {
-          scrollToResults();
-          if (isMobile) setIsMobileFilterOpen(false);
-        }}
-        className="btn w-full bg-accent-yellow hover:bg-accent-orange text-dark-chocolate font-bold border-none shadow-md hover:shadow-lg transition-all duration-300"
-      >
-        View Results
-        <ChevronDown size={18} />
-      </button>
-    </div>
-  );
+  // Helper props object to pass to FilterPanel
+  const filterProps = {
+    resetFilters,
+    museumCategory, setMuseumCategory,
+    country, setCountry,
+    artifactCategory, setArtifactCategory,
+    artifactRegion, setArtifactRegion,
+    dateRange, setDateRange,
+    scrollToResults,
+    setIsMobileFilterOpen
+  };
 
   return (
     <div className="min-h-screen bg-old-paper font-dmsans selection:bg-accent-orange/30 selection:text-dark-chocolate relative">
-      {/* Noise Overlay */}
       <div className="fixed inset-0 bg-noise opacity-40 pointer-events-none mix-blend-multiply z-0"></div>
 
       {/* --- Navbar --- */}
@@ -300,7 +289,7 @@ export default function Explore() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" />
               </svg>
             </div>
-            <ul tabIndex="-1" className="menu menu-sm dropdown-content bg-dark-chocolate rounded-box z-[100] mt-3 w-52 p-2 shadow-xl text-white border border-white/10">
+            <ul tabIndex="-1" className="menu menu-sm dropdown-content bg-dark-chocolate rounded-box z-100 mt-3 w-52 p-2 shadow-xl text-white border border-white/10">
               <li><a className="hover:bg-white/10">Home</a></li>
               <li><a className="hover:bg-white/10 text-accent-yellow">Explore</a></li>
               <li><a className="hover:bg-white/10">Archive</a></li>
@@ -324,8 +313,7 @@ export default function Explore() {
 
       {/* --- Map Section (Hero) --- */}
       <section className="relative h-[80vh] md:h-[85vh] z-10">
-        {/* Search Bar - Sticky at top of map */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-[90%] md:w-[60%] lg:w-[50%]">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-1000 w-[90%] md:w-[60%] lg:w-[50%]">
           <div className="join w-full shadow-2xl rounded-full overflow-hidden">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-chocolate/40" size={20} />
@@ -344,13 +332,12 @@ export default function Explore() {
           </div>
         </div>
 
-        {/* Filter Panel - Desktop (Left side) */}
-        <div className={`absolute top-4 left-4 z-[1000] hidden md:block transition-all duration-500 ${isFilterOpen ? 'w-72' : 'w-12'}`} style={{ maxHeight: isFilterOpen ? 'calc(100% - 5rem)' : 'auto' }}>
+        {/* Filter Panel - Desktop */}
+        <div className={`absolute top-4 left-4 z-1000 hidden md:block transition-all duration-500 ${isFilterOpen ? 'w-72' : 'w-12'}`} style={{ maxHeight: isFilterOpen ? 'calc(100% - 5rem)' : 'auto' }}>
           <div className={`bg-white/90 backdrop-blur-md rounded-xl shadow-2xl border border-dark-chocolate/10 overflow-hidden flex flex-col ${isFilterOpen ? 'h-full' : 'h-auto'}`}>
-            {/* Toggle Button */}
             <button 
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="w-full flex items-center justify-between p-3 bg-dark-chocolate/5 hover:bg-dark-chocolate/10 transition-colors flex-shrink-0"
+              className="w-full flex items-center justify-between p-3 bg-dark-chocolate/5 hover:bg-dark-chocolate/10 transition-colors shrink-0"
             >
               <span className={`font-medium text-dark-chocolate ${!isFilterOpen && 'hidden'}`}>
                 {isFilterOpen ? 'Hide Filters' : ''}
@@ -358,27 +345,26 @@ export default function Explore() {
               <Filter size={20} className="text-dark-chocolate" />
             </button>
             
-            {/* Filter Content */}
             {isFilterOpen && (
               <div className="overflow-y-auto overflow-x-hidden flex-1">
-                <FilterPanel />
+                {/* REFACTORED USAGE: Passing props */}
+                <FilterPanel {...filterProps} isMobile={false} />
               </div>
             )}
           </div>
         </div>
 
-        {/* Filter Panel - Mobile (Bottom Sheet) */}
+        {/* Filter Panel - Mobile */}
         <button 
           onClick={() => setIsMobileFilterOpen(true)}
-          className="md:hidden absolute bottom-6 left-4 z-[1000] btn bg-white/90 backdrop-blur-md shadow-xl border-none text-dark-chocolate"
+          className="md:hidden absolute bottom-6 left-4 z-1000 btn bg-white/90 backdrop-blur-md shadow-xl border-none text-dark-chocolate"
         >
           <Filter size={18} />
           Filters
         </button>
 
-        {/* Mobile Filter Drawer */}
         {isMobileFilterOpen && (
-          <div className="md:hidden fixed inset-0 z-[2000] flex items-end">
+          <div className="md:hidden fixed inset-0 z-2000 flex items-end">
             <div 
               className="absolute inset-0 bg-black/50 backdrop-blur-sm"
               onClick={() => setIsMobileFilterOpen(false)}
@@ -390,15 +376,15 @@ export default function Explore() {
                   <X size={24} />
                 </button>
               </div>
-              <FilterPanel isMobile={true} />
+              {/* REFACTORED USAGE: Passing props */}
+              <FilterPanel {...filterProps} isMobile={true} />
             </div>
           </div>
         )}
 
-        {/* Scroll to Results Indicator */}
         <button 
           onClick={scrollToResults}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center text-white animate-bounce"
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-1000 flex flex-col items-center text-white animate-bounce"
         >
           <span className="text-sm font-medium bg-dark-chocolate/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
             Scroll for results
@@ -406,7 +392,6 @@ export default function Explore() {
           <ChevronDown size={24} className="mt-1" />
         </button>
 
-        {/* Map */}
         <MapContainer 
           center={mapCenter} 
           zoom={2} 
@@ -457,7 +442,6 @@ export default function Explore() {
       {/* --- Results Section --- */}
       <section ref={resultsRef} className="results-section relative z-20 bg-old-paper py-16 md:py-24 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
-          {/* Section Header */}
           <div className="results-title mb-12 text-center">
             <p className="text-xs uppercase tracking-widest text-accent-orange font-bold mb-2">Discover Treasures</p>
             <h2 className="font-playfair text-4xl md:text-5xl font-bold text-dark-chocolate mb-4">
@@ -468,7 +452,6 @@ export default function Explore() {
             </p>
           </div>
 
-          {/* Results Count & Sort */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <h3 className="text-xl font-bold text-dark-chocolate">
               <span className="text-accent-orange">{filteredArtifacts.length}</span> artifacts found
@@ -482,7 +465,6 @@ export default function Explore() {
             </select>
           </div>
 
-          {/* Artifacts Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-6 justify-items-center">
             {filteredArtifacts.map((artifact, index) => (
               <div 
@@ -500,7 +482,6 @@ export default function Explore() {
             ))}
           </div>
 
-          {/* Empty State */}
           {filteredArtifacts.length === 0 && (
             <div className="text-center py-16">
               <div className="w-24 h-24 mx-auto mb-6 bg-dark-chocolate/10 rounded-full flex items-center justify-center">
@@ -517,7 +498,6 @@ export default function Explore() {
             </div>
           )}
 
-          {/* Pagination */}
           {filteredArtifacts.length > 0 && (
             <div className="flex justify-center mt-16">
               <div className="join shadow-lg">
@@ -532,7 +512,6 @@ export default function Explore() {
         </div>
       </section>
 
-      {/* --- Footer --- */}
       <footer className="bg-dark-chocolate text-white/60 py-12 relative z-20">
         <div className="max-w-7xl mx-auto px-4 md:px-8 text-center">
           <h4 className="font-playfair text-2xl text-white mb-4">Kyubiko</h4>
@@ -543,15 +522,10 @@ export default function Explore() {
         </div>
       </footer>
 
-      {/* Custom Styles */}
       <style jsx>{`
         @keyframes slide-up {
-          from {
-            transform: translateY(100%);
-          }
-          to {
-            transform: translateY(0);
-          }
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
         }
         .animate-slide-up {
           animation: slide-up 0.3s ease-out;
