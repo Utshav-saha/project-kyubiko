@@ -259,3 +259,32 @@ create table bookings (
 INSERT INTO bookings (ticket_code, user_id, tour_id, time_slot_id)
 VALUES
 ('TESTTICKET123', 2, 1, 1);
+
+
+
+
+-- // Triggers
+CREATE OR REPLACE FUNCTION check_duplicate_artifact() 
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 
+        FROM artifacts 
+        WHERE artifact_name = NEW.artifact_name
+        AND creator = NEW.creator
+        AND origin = NEW.origin
+    ) THEN
+    
+        RAISE EXCEPTION 'Duplicate artifact detected: % by % from %', 
+            NEW.artifact_name, NEW.creator, NEW.origin
+            USING ERRCODE = 'unique_violation'; 
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER prevent_duplicate_artifact
+BEFORE INSERT ON artifacts
+FOR EACH ROW
+EXECUTE FUNCTION check_duplicate_artifact();

@@ -12,8 +12,8 @@ router.post("/register", async(req, res)=>{
         const user = await pool.query(                  // user = array of rows returned by the query
             `SELECT * 
              FROM USERS 
-             WHERE EMAIL = $1`, 
-            [email]
+             WHERE EMAIL = $1 AND ROLE = $2`, 
+            [email, role]
         );
         if(user.rows.length !== 0){ 
             return res.status(401).json("User already exists");
@@ -32,8 +32,9 @@ router.post("/register", async(req, res)=>{
         );
 
         const token = jwtGenerator(newUser.rows[0].user_id);
-        res.json({token});
-
+        const username = newUser.rows[0].username;
+        const avatar_url = newUser.rows[0].avatar_url;
+        res.json({ token, username, avatar_url });
 
     } catch (error) {
         console.error(error.message);
@@ -44,13 +45,13 @@ router.post("/register", async(req, res)=>{
 // Login Route
 router.post("/login", async(req, res)=>{
     try {
-        const {email, pass} = req.body;
+        const {email, pass, role} = req.body;
 
         const user = await pool.query(
             `SELECT * 
              FROM USERS 
-             WHERE EMAIL = $1`, 
-            [email]
+             WHERE EMAIL = $1 AND ROLE = $2`, 
+            [email, role]
         );
         if(user.rows.length === 0){ 
             return res.status(401).json("Invalid Email");
@@ -62,7 +63,9 @@ router.post("/login", async(req, res)=>{
         }
 
         const token = jwtGenerator(user.rows[0].user_id);
-        res.json({token});
+        const username = user.rows[0].username;
+        const avatar_url = user.rows[0].avatar_url;
+        res.json({ token, username, avatar_url });
 
     } catch (error) {
         console.error(error.message);

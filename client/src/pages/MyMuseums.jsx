@@ -1,7 +1,16 @@
 import React, { useState } from "react";
-import { Plus, ArrowUpRight, MapPin, Search } from "lucide-react";
+import {
+  Plus,
+  ArrowUpRight,
+  MapPin,
+  Search,
+  X,
+  Image as ImageIcon,
+  Upload,
+} from "lucide-react";
 
 const MyMuseums = () => {
+  const [isForm, setIsForm] = useState(false);
   const [museums, setMuseums] = useState([
     {
       id: 1,
@@ -15,11 +24,70 @@ const MyMuseums = () => {
     },
   ]);
 
+  // User info
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem("user");
+    try {
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch (error) {
+      return null;
+    }
+  });
+
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    image: null,
+    imagePreview: null,
+  });
+
   const totalMuseums = museums.length;
   const totalArtifacts = museums.reduce(
     (sum, museum) => sum + museum.artifactCount,
     0,
   );
+
+  // --- Handlers ---
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const previewUrl = URL.createObjectURL(file);
+      setFormData((prev) => ({
+        ...prev,
+        image: file,
+        imagePreview: previewUrl,
+      }));
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    // NOTE: Cloudinary upload logic goes here
+
+    const newMuseum = {
+      id: museums.length + 1,
+      name: formData.name,
+      description: formData.description,
+      artifactCount: 0,
+      coverImage:
+        formData.imagePreview ||
+        "https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=800&q=80",
+      createdAt: new Date().toISOString().split("T")[0],
+      location: "Virtual", // Default since user input is removed
+    };
+
+    setMuseums([...museums, newMuseum]);
+
+    // Reset and close
+    setFormData({ name: "", description: "", image: null, imagePreview: null });
+    setIsForm(false);
+  };
 
   return (
     <div className="min-h-screen bg-old-paper font-dmsans selection:bg-accent-orange/30 selection:text-dark-chocolate relative">
@@ -81,10 +149,17 @@ const MyMuseums = () => {
               </li>
             </ul>
           </div>
-          <div className="navbar-end">
-            <a className="btn btn-ghost border border-white/20 text-white mr-5 hover:bg-white/10 transition-colors">
-              Login / Sign up
-            </a>
+          <div className="navbar-end gap-3">
+            <div className="ml-4 bg-white/10 text-dark-chocolate px-4 py-2 rounded-full shadow-md">
+              <span className="text-sm font-medium text-white">
+                {user.username}
+              </span>
+            </div>
+            <div className="avatar avatar-online">
+              <div className="w-12 rounded-full">
+                <img src={user.avatarUrl} alt="User Avatar" />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -146,7 +221,7 @@ const MyMuseums = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* 1. Create New */}
           <button
-            onClick={() => console.log("Create")}
+            onClick={() => setIsForm(true)}
             className="group relative h-full min-h-105 flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-dark-chocolate/20 hover:border-accent-orange hover:bg-white/40 transition-all duration-300 gap-6 cursor-pointer"
           >
             <div className="w-20 h-20 rounded-full bg-linear-to-br from-accent-orange to-accent-yellow flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:rotate-90 transition-all duration-500">
@@ -175,7 +250,6 @@ const MyMuseums = () => {
                   alt={museum.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-
                 <div className="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm border border-dark-chocolate/5">
                   <MapPin size={12} className="text-accent-orange" />
                   <span className="text-xs font-bold tracking-widest uppercase text-dark-chocolate">
@@ -188,7 +262,6 @@ const MyMuseums = () => {
                 <div className="absolute -top-6 right-6 w-12 h-12 bg-accent-orange text-white rounded-full flex items-center justify-center shadow-lg scale-0 group-hover:scale-100 transition-transform duration-300 delay-100">
                   <ArrowUpRight size={24} />
                 </div>
-
                 <div className="flex flex-col h-full justify-between">
                   <div>
                     <h3 className="font-playfair text-2xl font-bold text-dark-chocolate mb-2 leading-none group-hover:text-accent-orange transition-colors">
@@ -198,7 +271,6 @@ const MyMuseums = () => {
                       {museum.description}
                     </p>
                   </div>
-
                   <div className="flex items-center justify-between border-t border-dark-chocolate/10 pt-4 mt-2">
                     <span className="text-xs font-mono text-dark-chocolate/50 uppercase">
                       ID: 0{museum.id}
@@ -213,6 +285,120 @@ const MyMuseums = () => {
           ))}
         </div>
       </div>
+
+      {/* Form */}
+      {isForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8">
+          <div
+            className="absolute inset-0 bg-dark-chocolate/60 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsForm(false)}
+          ></div>
+
+          {/* Form Content  */}
+          <div className="relative w-full max-w-4xl bg-old-paper rounded-2xl shadow-2xl overflow-hidden border border-white/20 transform transition-all animate-in fade-in zoom-in-95 duration-200 flex flex-col md:flex-row h-auto md:h-125">
+            <button
+              onClick={() => setIsForm(false)}
+              className="absolute top-4 right-4 z-30 p-2 rounded-full bg-white/50 hover:bg-white text-dark-chocolate transition-colors backdrop-blur-md"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Image Upload  */}
+            <div className="relative w-full md:w-5/12 bg-dark-chocolate/5 group overflow-hidden cursor-pointer border-r border-dark-chocolate/10 h-64 md:h-full">
+              <input
+                type="file"
+                onChange={handleImageUpload}
+                accept="image/*"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+              />
+
+              {formData.imagePreview ? (
+                <>
+                  <img
+                    src={formData.imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center z-10">
+                    <div className="text-white text-center opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
+                      <Upload size={32} className="mx-auto mb-2" />
+                      <p className="font-medium text-sm">Change Cover</p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-dark-chocolate/50 p-6 text-center">
+                  <div className="w-16 h-16 rounded-full bg-white shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-accent-orange">
+                    <ImageIcon size={32} />
+                  </div>
+                  <p className="font-playfair text-xl font-bold text-dark-chocolate">
+                    Upload Cover
+                  </p>
+                  <p className="text-sm text-dark-chocolate/60 mt-2">
+                    Choose an image that defines your collection.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/*Form Details */}
+            <form
+              onSubmit={handleSubmit}
+              className="flex-1 p-8 md:p-12 flex flex-col justify-center relative bg-white/30 backdrop-blur-sm"
+            >
+              <div className="mb-8">
+                <h2 className="font-playfair text-4xl font-bold text-dark-chocolate mb-2">
+                  New Collection
+                </h2>
+                <p className="text-dark-chocolate/60">
+                  Begin your curation journey.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-dark-chocolate/60">
+                    Mini Museum Name
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="E.g. The Renaissance Era"
+                    required
+                    className="w-full bg-transparent border-b-2 border-dark-chocolate/10 px-0 py-3 text-dark-chocolate font-playfair font-medium text-xl placeholder:text-dark-chocolate/20 focus:outline-none focus:border-accent-orange transition-all"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-dark-chocolate/60">
+                    Description
+                  </label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    rows="3"
+                    placeholder="What is this collection about?"
+                    required
+                    className="w-full bg-white/40 border border-dark-chocolate/10 rounded-lg px-4 py-3 text-dark-chocolate resize-none placeholder:text-dark-chocolate/20 focus:outline-none focus:border-accent-orange focus:bg-white transition-all text-sm"
+                  ></textarea>
+                </div>
+              </div>
+
+              <div className="mt-10 flex justify-end">
+                <button
+                  type="submit"
+                  className="px-8 py-3 rounded-full bg-dark-chocolate text-old-paper font-medium hover:bg-accent-orange hover:text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+                >
+                  <Plus size={18} /> Create Museum
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

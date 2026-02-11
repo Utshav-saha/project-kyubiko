@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { API_URL } from "../config";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
+  const navigate = useNavigate();
   const [action, setAction] = useState("Create an Account");
   const [data, setData] = useState({
     firstName: "",
@@ -92,8 +94,14 @@ export default function Login() {
 
       if (parseRes.token) {
         localStorage.setItem("token", parseRes.token);
-        console.log("Token stored successfully:", parseRes.token);
-        alert("Successful!");
+        const userPayload = {
+          username: parseRes.username,
+          avatarUrl: parseRes.avatar_url  
+        };
+        localStorage.setItem("user", JSON.stringify(userPayload));
+        
+        console.log("Login success");
+        navigate("/my-museums");
       } else {
         alert(parseRes);
       }
