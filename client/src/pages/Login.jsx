@@ -94,11 +94,6 @@ export default function Login() {
 
       if (parseRes.token) {
         localStorage.setItem("token", parseRes.token);
-        const userPayload = {
-          username: parseRes.username,
-          avatarUrl: parseRes.avatar_url  
-        };
-        localStorage.setItem("user", JSON.stringify(userPayload));
         
         console.log("Login success");
         navigate("/my-museums");
@@ -107,6 +102,7 @@ export default function Login() {
       }
     } catch (err) {
       console.error(err.message);
+      alert("Server connection failed");
     } finally {
       setIsLoading(false);
     }
