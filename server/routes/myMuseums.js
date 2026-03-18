@@ -6,6 +6,10 @@ const authorization = require("../middleware/authorization");
 // get infos and museums
 router.get("/", authorization, async (req, res) => {
     try {
+
+        if(req.user.role !== "curator"){
+            return res.status(403).json("Only Curator Authorized");
+        }
         const user_id = req.user.id; 
 
         const user = await pool.query(
@@ -35,6 +39,9 @@ router.get("/", authorization, async (req, res) => {
 // create a new museum
 router.post("/", authorization, async (req, res) => {
     try {
+        if(req.user.role !== "curator"){
+            return res.status(403).json("Only Curator Authorized");
+        }
         const { mini_museum_name, description, picture_url } = req.body; 
         const curator_id = req.user.id;
 

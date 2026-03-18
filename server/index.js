@@ -11,6 +11,7 @@ app.use(express.json());
 
 app.use("/auth", require("./routes/auth"));
 app.use("/my-museums", require("./routes/myMuseums"));
+app.use("/search", require("./routes/search"));
 
 
 

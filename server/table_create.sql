@@ -265,22 +265,20 @@ VALUES
 
 -- // Triggers
 CREATE OR REPLACE FUNCTION check_duplicate_artifact() 
-RETURNS TRIGGER AS $$
+returns TRIGGER AS $$
 BEGIN
-    IF EXISTS (
+    if EXISTS (
         SELECT 1 
         FROM artifacts 
         WHERE artifact_name = NEW.artifact_name
         AND creator = NEW.creator
         AND origin = NEW.origin
-    ) THEN
+    ) then
     
-        RAISE EXCEPTION 'Duplicate artifact detected: % by % from %', 
-            NEW.artifact_name, NEW.creator, NEW.origin
-            USING ERRCODE = 'unique_violation'; 
-    END IF;
+        return null;
+    END if;
 
-    RETURN NEW;
+    return NEW;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -288,3 +286,53 @@ CREATE TRIGGER prevent_duplicate_artifact
 BEFORE INSERT ON artifacts
 FOR EACH ROW
 EXECUTE FUNCTION check_duplicate_artifact();
+
+
+-- // Functions
+create or replace function get_category(p_department varchar)
+returns integer as $$
+declare
+    v_category_id integer;
+    v_dept varchar(100);
+begin
+    if p_department is null or trim(p_department) = '' 
+    then
+        return null; 
+    end if;
+
+    v_dept := lower(p_department);
+
+    -- search for existing categories
+    if v_dept like '%photo%' then
+        return 2;
+    elsif v_dept like '%sculpture%' then
+        return 3;
+    elsif v_dept like '%art%' then
+        return 4;
+    elsif v_dept like '%instrument%' then
+        return 5;
+    end if;
+
+    select category_id into v_category_id
+    from categories
+    where lower(category_name) = v_dept 
+    limit 1;
+    
+
+    if v_category_id is not null then
+        return v_category_id; 
+    end if;
+
+    -- create new category if not found
+    insert into categories (category_name)
+    values (p_department)
+    returning category_id into v_category_id;
+
+    return v_category_id;
+end;
+$$ language plpgsql
+
+
+// -- like count - procedure
+// -- views count + add to artifacts_views trigger
+

@@ -31,10 +31,10 @@ router.post("/register", async(req, res)=>{
             [userName, email, bcryptPass , role]
         );
 
-        const token = jwtGenerator(newUser.rows[0].user_id);
+        const token = jwtGenerator(newUser.rows[0].user_id, newUser.rows[0].role);
         const username = newUser.rows[0].username;
         const avatar_url = newUser.rows[0].avatar_url;
-        res.json({ token, username, avatar_url });
+        res.json({ token, username, avatar_url , role: newUser.rows[0].role});
 
     } catch (error) {
         console.error(error.message);
@@ -42,16 +42,16 @@ router.post("/register", async(req, res)=>{
     }
 });
 
-// Login Route
+//Login Route
 router.post("/login", async(req, res)=>{
     try {
-        const {email, pass, role} = req.body;
+        const {email, pass} = req.body;
 
         const user = await pool.query(
             `SELECT * 
              FROM USERS 
-             WHERE EMAIL = $1 AND ROLE = $2`, 
-            [email, role]
+             WHERE EMAIL = $1`, 
+            [email]
         );
         if(user.rows.length === 0){ 
             return res.status(401).json("Invalid Email");
@@ -62,10 +62,10 @@ router.post("/login", async(req, res)=>{
             return res.status(401).json("Incorrect Password");
         }
 
-        const token = jwtGenerator(user.rows[0].user_id);
+        const token = jwtGenerator(user.rows[0].user_id, user.rows[0].role);
         const username = user.rows[0].username;
         const avatar_url = user.rows[0].avatar_url;
-        res.json({ token, username, avatar_url });
+        res.json({ token, username, avatar_url , role: user.rows[0].role});
 
     } catch (error) {
         console.error(error.message);

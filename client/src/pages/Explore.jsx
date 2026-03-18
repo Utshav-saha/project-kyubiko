@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
-import { Search, Filter, ChevronDown, X, MapPin } from 'lucide-react';
+import { Search, Filter, ChevronDown, X, MapPin, Heart, User } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Card from '../components/common/Card';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-// Fix for default marker icons in Leaflet with React
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -17,25 +15,104 @@ L.Icon.Default.mergeOptions({
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Mock museum locations with coordinates
-const museumLocations = [
-  { id: 1, name: "The Louvre", lat: 48.8606, lng: 2.3376, country: "France", category: "Art" },
-  { id: 2, name: "British Museum", lat: 51.5194, lng: -0.1270, country: "United Kingdom", category: "History" },
-  { id: 3, name: "Egyptian Museum", lat: 30.0478, lng: 31.2336, country: "Egypt", category: "History" },
-  { id: 4, name: "Metropolitan Museum", lat: 40.7794, lng: -73.9632, country: "United States", category: "Art" },
-  { id: 5, name: "National Museum of India", lat: 28.6117, lng: 77.2195, country: "India", category: "Cultural" },
-  { id: 6, name: "Acropolis Museum", lat: 37.9685, lng: 23.7292, country: "Greece", category: "History" },
-  { id: 7, name: "Vatican Museums", lat: 41.9065, lng: 12.4536, country: "Italy", category: "Art" },
-  { id: 8, name: "National Museum of China", lat: 39.9042, lng: 116.3912, country: "China", category: "Cultural" },
+// --- Dummy Museum Data ---
+const dummyMuseums = [
+  
+  
+  { 
+    id: 1, 
+    name: "Industrial Revolution", 
+    description: "Machinery, blueprints, and the transformation of London during the 1800s.", 
+    image: "https://images.unsplash.com/photo-1555009312-3df64fb56cb2?w=800&q=80", 
+    lat: 51.5194, 
+    lng: -0.1270, 
+    country: "United Kingdom", 
+    category: "Science",
+    likes: 128,
+    creator: "Utshav"
+  },
+  { 
+    id: 2, 
+    name: "Dynasties of the East", 
+    description: "Cultural artifacts, silk works, and pottery spanning the Ming and Qing dynasties.", 
+    image: "https://images.unsplash.com/photo-1596726224151-50802c659e51?w=800&q=80", 
+    lat: 39.9042, 
+    lng: 116.3912, 
+    country: "China", 
+    category: "Cultural",
+    likes: 890,
+    creator: "Ahnaf"
+  },
+  { 
+    id: 3, 
+    name: "Modern Impressions", 
+    description: "A vibrant collection of late 19th and early 20th-century impressionist paintings.", 
+    image: "https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=800&q=80", 
+    lat: 48.8606, 
+    lng: 2.3376, 
+    country: "France", 
+    category: "Art",
+    likes: 275,
+    creator: "Utshav"
+  },
 ];
 
 // Filter options
 const museumCategories = ["All", "Art", "History", "Science", "Cultural"];
-const countries = ["All", "France", "United Kingdom", "Egypt", "United States", "India", "Greece", "Italy", "China", "Japan", "Germany"];
-const artifactCategories = ["All", "Sculpture", "Painting", "Coin", "Textile", "Weapon", "Pottery", "Jewelry", "Manuscript"];
-const artifactRegions = ["All", "Europe", "Middle East", "Asia", "Africa", "Americas", "Oceania"];
+const countries = ["All", "France", "United Kingdom", "Egypt", "Italy", "China"];
 
-// Component to handle map center changes
+// --- New MuseumCard Component ---
+const MuseumCard = ({ museum }) => {
+  return (
+    <div className="group h-full w-full bg-white rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 relative flex flex-col border border-dark-chocolate/10">
+      <div className="relative h-48 overflow-hidden">
+        <img
+          src={museum.image}
+          alt={museum.name}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+        <div className="absolute top-4 left-4 z-20 flex gap-2">
+          <div className="bg-white/90 backdrop-blur px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+            <MapPin size={12} className="text-accent-orange" />
+            <span className="text-xs font-bold tracking-widest uppercase text-dark-chocolate">
+              {museum.country}
+            </span>
+          </div>
+        </div>
+        <div className="absolute top-4 right-4 z-20 bg-dark-chocolate/80 backdrop-blur px-3 py-1 rounded-full shadow-sm">
+           <span className="text-xs font-bold tracking-widest uppercase text-accent-yellow">
+              {museum.category}
+            </span>
+        </div>
+      </div>
+
+      <div className="flex-1 p-6 relative bg-white flex flex-col">
+        <div className="flex-1">
+          <h3 className="font-playfair text-2xl font-bold text-dark-chocolate mb-2 leading-tight group-hover:text-accent-orange transition-colors">
+            {museum.name}
+          </h3>
+          <p className="text-dark-chocolate/70 text-sm leading-relaxed line-clamp-3 mb-4">
+            {museum.description}
+          </p>
+        </div>
+        
+        <div className="flex items-center justify-between border-t border-dark-chocolate/10 pt-4 mt-auto">
+          <div className="flex items-center gap-2 text-dark-chocolate/80">
+            <div className="w-6 h-6 rounded-full bg-dark-chocolate/10 flex items-center justify-center">
+              <User size={12} />
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider">{museum.creator}</span>
+          </div>
+          <span className="text-xs font-bold text-dark-chocolate flex items-center gap-1">
+            <Heart size={14} className="text-red-500 fill-red-500" />
+            {museum.likes}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function MapController({ center }) {
   const map = useMap();
   useEffect(() => {
@@ -46,15 +123,11 @@ function MapController({ center }) {
   return null;
 }
 
-// MOVED OUTSIDE: FilterPanel is now a standalone component receiving props
 const FilterPanel = ({ 
   isMobile = false, 
   resetFilters, 
   museumCategory, setMuseumCategory,
   country, setCountry,
-  artifactCategory, setArtifactCategory,
-  artifactRegion, setArtifactRegion,
-  dateRange, setDateRange,
   scrollToResults,
   setIsMobileFilterOpen
 }) => (
@@ -72,11 +145,10 @@ const FilterPanel = ({
       </button>
     </div>
 
-    {/* Museum Filters */}
-    <div className="mb-5">
-      <p className="text-xs uppercase tracking-widest text-dark-chocolate/60 font-bold mb-3">Museum Filters</p>
+    <div className="mb-6">
+      <p className="text-xs uppercase tracking-widest text-dark-chocolate/60 font-bold mb-3">Museum Properties</p>
       
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div>
           <label className="text-sm font-medium text-dark-chocolate mb-1 block">Category</label>
           <select 
@@ -91,7 +163,7 @@ const FilterPanel = ({
         </div>
         
         <div>
-          <label className="text-sm font-medium text-dark-chocolate mb-1 block">Country/State</label>
+          <label className="text-sm font-medium text-dark-chocolate mb-1 block">Location Origin</label>
           <select 
             value={country}
             onChange={(e) => setCountry(e.target.value)}
@@ -105,68 +177,6 @@ const FilterPanel = ({
       </div>
     </div>
 
-    {/* Divider */}
-    <div className="border-t border-dark-chocolate/10 my-4"></div>
-
-    {/* Artifact Filters */}
-    <div className="mb-5">
-      <p className="text-xs uppercase tracking-widest text-dark-chocolate/60 font-bold mb-3">Artifact Filters</p>
-      
-      <div className="space-y-3">
-        <div>
-          <label className="text-sm font-medium text-dark-chocolate mb-1 block">Category</label>
-          <select 
-            value={artifactCategory}
-            onChange={(e) => setArtifactCategory(e.target.value)}
-            className="select select-sm w-full bg-white border border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none"
-          >
-            {artifactCategories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-        </div>
-        
-        <div>
-          <label className="text-sm font-medium text-dark-chocolate mb-1 block">Region</label>
-          <select 
-            value={artifactRegion}
-            onChange={(e) => setArtifactRegion(e.target.value)}
-            className="select select-sm w-full bg-white border border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none"
-          >
-            {artifactRegions.map(r => (
-              <option key={r} value={r}>{r}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Date Range Slider */}
-        <div>
-          <label className="text-sm font-medium text-dark-chocolate mb-2 block">
-            Date Period: {dateRange.start < 0 ? `${Math.abs(dateRange.start)} BC` : `${dateRange.start} AD`} - {dateRange.end} AD
-          </label>
-          <div className="space-y-2">
-            <input
-              type="range"
-              min="-3000"
-              max="2024"
-              value={dateRange.start}
-              onChange={(e) => setDateRange(prev => ({ ...prev, start: parseInt(e.target.value) }))}
-              className="range range-xs range-warning w-full"
-            />
-            <input
-              type="range"
-              min="-3000"
-              max="2024"
-              value={dateRange.end}
-              onChange={(e) => setDateRange(prev => ({ ...prev, end: parseInt(e.target.value) }))}
-              className="range range-xs range-warning w-full"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {/* View Results Button */}
     <button 
       onClick={() => {
         scrollToResults();
@@ -174,14 +184,14 @@ const FilterPanel = ({
       }}
       className="btn w-full bg-accent-yellow hover:bg-accent-orange text-dark-chocolate font-bold border-none shadow-md hover:shadow-lg transition-all duration-300"
     >
-      View Results
+      Apply Filters
       <ChevronDown size={18} />
     </button>
   </div>
 );
 
 export default function Explore() {
-  const [artifacts, setArtifacts] = useState([]);
+  const [museums, setMuseums] = useState(dummyMuseums);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(true);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -191,39 +201,36 @@ export default function Explore() {
   // Filter states
   const [museumCategory, setMuseumCategory] = useState('All');
   const [country, setCountry] = useState('All');
-  const [artifactCategory, setArtifactCategory] = useState('All');
-  const [artifactRegion, setArtifactRegion] = useState('All');
-  const [dateRange, setDateRange] = useState({ start: -3000, end: 2024 });
   
   const resultsRef = useRef(null);
   const cardsRef = useRef([]);
 
-  // Load artifacts from JSON
-  useEffect(() => {
-    fetch('/artefacts.json')
-      .then(res => res.json())
-      .then(data => {
-        setArtifacts(data);
-      })
-      .catch(err => console.error('Error loading artifacts:', err));
-  }, []);
-
-  // Filter artifacts
-  const filteredArtifacts = useMemo(() => {
-    let filtered = artifacts;
+  // Filter museums
+  const filteredMuseums = useMemo(() => {
+    let filtered = museums;
     
     if (searchQuery) {
-      filtered = filtered.filter(artifact =>
-        artifact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        artifact.description.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(museum =>
+        museum.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        museum.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        museum.creator.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
+    
+    if (museumCategory !== 'All') {
+      filtered = filtered.filter(museum => museum.category === museumCategory);
+    }
+    
+    if (country !== 'All') {
+      filtered = filtered.filter(museum => museum.country === country);
+    }
+    
     return filtered;
-  }, [searchQuery, artifacts, museumCategory, country, artifactCategory, artifactRegion, dateRange]);
+  }, [searchQuery, museums, museumCategory, country]);
 
   // GSAP Animations
   useEffect(() => {
-    if (filteredArtifacts.length > 0 && cardsRef.current.length > 0) {
+    if (filteredMuseums.length > 0 && cardsRef.current.length > 0) {
       ScrollTrigger.getAll().forEach(trigger => trigger.kill());
       gsap.fromTo(
         '.results-title',
@@ -244,14 +251,11 @@ export default function Explore() {
         }
       });
     }
-  }, [filteredArtifacts]);
+  }, [filteredMuseums]);
 
   const resetFilters = () => {
     setMuseumCategory('All');
     setCountry('All');
-    setArtifactCategory('All');
-    setArtifactRegion('All');
-    setDateRange({ start: -3000, end: 2024 });
     setSearchQuery('');
   };
 
@@ -264,14 +268,10 @@ export default function Explore() {
     setMapCenter([museum.lat, museum.lng]);
   };
 
-  // Helper props object to pass to FilterPanel
   const filterProps = {
     resetFilters,
     museumCategory, setMuseumCategory,
     country, setCountry,
-    artifactCategory, setArtifactCategory,
-    artifactRegion, setArtifactRegion,
-    dateRange, setDateRange,
     scrollToResults,
     setIsMobileFilterOpen
   };
@@ -311,7 +311,7 @@ export default function Explore() {
         </div>
       </div>
 
-      {/* --- Map Section (Hero) --- */}
+      {/* --- Map Section --- */}
       <section className="relative h-[80vh] md:h-[85vh] z-10">
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-1000 w-[90%] md:w-[60%] lg:w-[50%]">
           <div className="join w-full shadow-2xl rounded-full overflow-hidden">
@@ -321,7 +321,7 @@ export default function Explore() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for artifacts, museums, exhibitions..."
+                placeholder="Search museums, topics, or creators..."
                 className="input join-item w-full bg-white/95 backdrop-blur-md h-14 text-base focus:outline-none border-none pl-12 pr-4 text-dark-chocolate placeholder:text-dark-chocolate/40"
               />
             </div>
@@ -347,7 +347,6 @@ export default function Explore() {
             
             {isFilterOpen && (
               <div className="overflow-y-auto overflow-x-hidden flex-1">
-                {/* REFACTORED USAGE: Passing props */}
                 <FilterPanel {...filterProps} isMobile={false} />
               </div>
             )}
@@ -376,7 +375,6 @@ export default function Explore() {
                   <X size={24} />
                 </button>
               </div>
-              {/* REFACTORED USAGE: Passing props */}
               <FilterPanel {...filterProps} isMobile={true} />
             </div>
           </div>
@@ -384,7 +382,7 @@ export default function Explore() {
 
         <button 
           onClick={scrollToResults}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-1000 flex flex-col items-center text-white animate-bounce"
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-1000 flex flex-col items-center text-white animate-bounce cursor-pointer"
         >
           <span className="text-sm font-medium bg-dark-chocolate/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
             Scroll for results
@@ -394,7 +392,7 @@ export default function Explore() {
 
         <MapContainer 
           center={mapCenter} 
-          zoom={2} 
+          zoom={3} 
           minZoom={2}
           maxBoundsViscosity={1.0}
           maxBounds={[[-85, -180], [85, 180]]}
@@ -404,38 +402,38 @@ export default function Explore() {
           style={{ background: '#E8E2D9' }}
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
             noWrap={false}
           />
           <ZoomControl position="topright" />
           <MapController center={selectedMarker ? [selectedMarker.lat, selectedMarker.lng] : null} />
           
-          {museumLocations
-            .filter(m => museumCategory === 'All' || m.category === museumCategory)
-            .filter(m => country === 'All' || m.country === country)
-            .map(museum => (
-              <Marker 
-                key={museum.id} 
-                position={[museum.lat, museum.lng]}
-                eventHandlers={{
-                  click: () => handleMarkerClick(museum),
-                }}
-              >
-                <Popup className="custom-popup">
-                  <div className="font-dmsans">
-                    <h4 className="font-bold text-dark-chocolate text-base">{museum.name}</h4>
-                    <p className="text-sm text-dark-chocolate/70 flex items-center gap-1 mt-1">
-                      <MapPin size={14} className="text-accent-orange" />
-                      {museum.country}
-                    </p>
-                    <span className="inline-block mt-2 text-xs bg-accent-yellow/30 text-dark-chocolate px-2 py-1 rounded-full">
-                      {museum.category}
-                    </span>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
+          {filteredMuseums.map(museum => (
+            <Marker 
+              key={museum.id} 
+              position={[museum.lat, museum.lng]}
+              eventHandlers={{
+                click: () => handleMarkerClick(museum),
+              }}
+            >
+              <Popup className="custom-popup">
+                <div className="font-dmsans">
+                  <h4 className="font-bold text-dark-chocolate text-base">{museum.name}</h4>
+                  <p className="text-sm text-dark-chocolate/70 flex items-center gap-1 mt-1">
+                    <MapPin size={14} className="text-accent-orange" />
+                    {museum.country}
+                  </p>
+                  <p className="text-xs text-dark-chocolate/50 mt-1 flex items-center gap-1">
+                    <User size={12}/> By {museum.creator}
+                  </p>
+                  <span className="inline-block mt-2 text-xs bg-accent-yellow/30 text-dark-chocolate px-2 py-1 rounded-full">
+                    {museum.category}
+                  </span>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
         </MapContainer>
       </section>
 
@@ -443,51 +441,47 @@ export default function Explore() {
       <section ref={resultsRef} className="results-section relative z-20 bg-old-paper py-16 md:py-24 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="results-title mb-12 text-center">
-            <p className="text-xs uppercase tracking-widest text-accent-orange font-bold mb-2">Discover Treasures</p>
+            <p className="text-xs uppercase tracking-widest text-accent-orange font-bold mb-2">Explore the Archives</p>
             <h2 className="font-playfair text-4xl md:text-5xl font-bold text-dark-chocolate mb-4">
-              Artifact Results
+               Museums
             </h2>
             <p className="text-dark-chocolate/60 max-w-2xl mx-auto">
-              Here's what Kyubi found...
+              Discover museums across the globe 
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <h3 className="text-xl font-bold text-dark-chocolate">
-              <span className="text-accent-orange">{filteredArtifacts.length}</span> artifacts found
+              <span className="text-accent-orange">{filteredMuseums.length}</span> museums found
             </h3>
             <select className="select select-bordered bg-white border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none">
-              <option disabled selected>Sort by</option>
+              <option disabled defaultValue>Sort by</option>
+              <option>Most Liked</option>
               <option>Newest Added</option>
-              <option>Oldest Artifact</option>
-              <option>Most Popular</option>
               <option>A-Z</option>
             </select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-6 justify-items-center">
-            {filteredArtifacts.map((artifact, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
+            {filteredMuseums.map((museum, index) => (
               <div 
-                key={index}
+                key={museum.id}
                 ref={el => cardsRef.current[index] = el}
-                className="w-full max-w-xs transform-gpu"
+                className="w-full transform-gpu"
                 style={{ perspective: '1000px' }}
               >
-                <Card
-                  name={artifact.name}
-                  image={artifact.image}
-                  description={artifact.description}
-                />
+                {/* Replaced generic Card with specific MuseumCard */}
+                <MuseumCard museum={museum} />
               </div>
             ))}
           </div>
 
-          {filteredArtifacts.length === 0 && (
+          {filteredMuseums.length === 0 && (
             <div className="text-center py-16">
               <div className="w-24 h-24 mx-auto mb-6 bg-dark-chocolate/10 rounded-full flex items-center justify-center">
                 <Search size={40} className="text-dark-chocolate/30" />
               </div>
-              <h3 className="font-playfair text-2xl font-bold text-dark-chocolate mb-2">No artifacts found</h3>
+              <h3 className="font-playfair text-2xl font-bold text-dark-chocolate mb-2">No museums found</h3>
               <p className="text-dark-chocolate/60 mb-6">Try adjusting your search or filters</p>
               <button 
                 onClick={resetFilters}
@@ -497,25 +491,13 @@ export default function Explore() {
               </button>
             </div>
           )}
-
-          {filteredArtifacts.length > 0 && (
-            <div className="flex justify-center mt-16">
-              <div className="join shadow-lg">
-                <button className="join-item btn bg-white hover:bg-accent-yellow text-dark-chocolate border-dark-chocolate/10">«</button>
-                <button className="join-item btn bg-accent-yellow text-dark-chocolate border-dark-chocolate/10">1</button>
-                <button className="join-item btn bg-white hover:bg-accent-yellow text-dark-chocolate border-dark-chocolate/10">2</button>
-                <button className="join-item btn bg-white hover:bg-accent-yellow text-dark-chocolate border-dark-chocolate/10">3</button>
-                <button className="join-item btn bg-white hover:bg-accent-yellow text-dark-chocolate border-dark-chocolate/10">»</button>
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
       <footer className="bg-dark-chocolate text-white/60 py-12 relative z-20">
         <div className="max-w-7xl mx-auto px-4 md:px-8 text-center">
           <h4 className="font-playfair text-2xl text-white mb-4">Kyubiko</h4>
-          <p className="text-sm">Preserving history, one artifact at a time.</p>
+          <p className="text-sm">Preserving history, one collection at a time.</p>
           <div className="border-t border-white/10 mt-8 pt-8">
             <p className="text-xs">© 2026 Kyubiko. All rights reserved.</p>
           </div>

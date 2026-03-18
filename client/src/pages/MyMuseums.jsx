@@ -9,10 +9,10 @@ import {
   Upload,
   Heart,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { API_URL, CLOUD_NAME, UPLOAD_PRESET } from "../config";
 
-const MyMuseums = () => {
+export default function MyMuseums () {
   const navigate = useNavigate();
   const [isForm, setIsForm] = useState(false);
 
@@ -53,7 +53,11 @@ const MyMuseums = () => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) {
+        const role = localStorage.getItem("role");
+
+        if (!token || role !== "curator") {
+          localStorage.removeItem("token");
+          localStorage.removeItem("role");
           navigate("/login");
           return;
         }
@@ -166,22 +170,73 @@ const MyMuseums = () => {
       <div className="relative bg-dark-chocolate text-old-paper pb-32 overflow-hidden z-10">
         {/* Navbar */}
         <div className="navbar shadow-sm bg-transparent z-20 border-b border-white/5">
-          <div className="navbar-start">
-            <a className="btn btn-ghost text-xl text-white ml-2">Kyubiko</a>
-          </div>
-
-          <div className="navbar-end gap-3">
-            <div className="ml-4 bg-white/10 text-dark-chocolate px-4 py-2 rounded-full shadow-md">
-              <span className="text-sm font-medium text-white">
-                {user.username}
-              </span>
+          <div className="navbar shadow-sm bg-transparent z-20">
+            <div className="navbar-start">
+              <div className="dropdown">
+                <div
+                  tabIndex={0}
+                  role="button"
+                  className="btn btn-dash lg:hidden"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="white"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M4 6h16M4 12h8m-8 6h16"
+                    />
+                  </svg>
+                </div>
+                <ul
+                  tabIndex="-1"
+                  className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow text-white"
+                >
+                  <li>
+                    <a>Home</a>
+                  </li>
+                  <li>
+                    <a>Explore</a>
+                  </li>
+                  <li>
+                    <a>Search</a>
+                  </li>
+                </ul>
+              </div>
+              <a className="btn btn-ghost text-xl text-white ml-5">Logo</a>
             </div>
-            <div className="avatar avatar-online">
-              <div className="w-12 rounded-full">
-                <img
-                  src={user.avatar_url || "https://placehold.co/150"}
-                  alt="User Avatar"
-                />
+            <div className="navbar-center hidden lg:flex">
+              <ul className="menu menu-horizontal px-1 text-white">
+                <li>
+                  <Link to="/">Home</Link>
+                </li>
+                <li>
+                  <Link to="/explore">Explore</Link>
+                </li>
+                <li>
+                  <Link to="/search">Search</Link>
+                </li>
+              </ul>
+            </div>
+
+            <div className="navbar-end gap-3">
+              <div className="ml-4 bg-white/10 text-dark-chocolate px-4 py-2 rounded-full shadow-md">
+                <span className="text-sm font-medium text-white">
+                  {user.username}
+                </span>
+              </div>
+              <div className="avatar avatar-online">
+                <div className="w-12 rounded-full">
+                  <img
+                    src={user.avatar_url || "https://placehold.co/150"}
+                    alt="User Avatar"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -373,4 +428,3 @@ const MyMuseums = () => {
   );
 };
 
-export default MyMuseums;

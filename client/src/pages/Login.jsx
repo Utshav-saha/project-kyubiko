@@ -94,9 +94,14 @@ export default function Login() {
 
       if (parseRes.token) {
         localStorage.setItem("token", parseRes.token);
-        
+        localStorage.setItem("role", parseRes.role);
+
         console.log("Login success");
-        navigate("/my-museums");
+        if (parseRes.role === "curator") {
+          navigate("/my-museums");
+        } else {
+          navigate("/manager-dashboard"); 
+        }
       } else {
         alert(parseRes);
       }
