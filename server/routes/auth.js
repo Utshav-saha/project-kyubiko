@@ -5,10 +5,13 @@ const jwtGenerator = require("../utils/jwtGenerator");
 
 // Register Route
 router.post("/register", async(req, res)=>{
+
+    const client =await pool.connect();
     try {
         const {firstName, lastName, email, pass, role } = req.body;
 
         const userName = `${firstName}_${lastName}`;
+
         const user = await pool.query(                  // user = array of rows returned by the query
             `SELECT * 
              FROM USERS 
@@ -23,13 +26,15 @@ router.post("/register", async(req, res)=>{
         const salt = await bcrypt.genSalt(saltRound);
         const bcryptPass = await bcrypt.hash(pass,salt);
 
-        const newUser = await pool.query(
+        await client.query("BEGIN");
+        const newUser = await client.query(
             `INSERT INTO USERS (USERNAME, EMAIL , PASSWORD, ROLE)
             VALUES
             ($1, $2, $3, $4)
             RETURNING *`, 
             [userName, email, bcryptPass , role]
         );
+        await client.query("COMMIT");
 
         const token = jwtGenerator(newUser.rows[0].user_id, newUser.rows[0].role);
         const username = newUser.rows[0].username;
@@ -38,7 +43,12 @@ router.post("/register", async(req, res)=>{
 
     } catch (error) {
         console.error(error.message);
+        await client.query("ROLLBACK");
+
         res.status(500).send("Server error");
+    }
+    finally{
+        client.release();
     }
 });
 

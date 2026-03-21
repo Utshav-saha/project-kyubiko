@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const test_reviews = [
   {
@@ -46,53 +46,65 @@ export default function Card({
   museum_name = "Unknown",
   category = "Unknown",
   origin = "Unknown",
+  color = false, 
   artifactId = 1,
+  onFavclick,
 }) {
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFav, setIsFav] = useState(color);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [newReviewText, setNewReviewText] = useState("");
-  const [newReviewRating, setNewReviewRating] = useState(0);
-  const [replyingTo, setReplyingTo] = useState(null);
-  const [replyText, setReplyText] = useState("");
+  const [newReview, setNewReview] = useState("");
+  const [newRating, setNewRating] = useState(0);
+  const [replyTo, setReplyTo] = useState(null);
+  const [reply, setReply] = useState("");
 
   const mainReviews = test_reviews.filter((r) => r.reply_id === null);
-  const getReplies = (reviewId) =>
-    test_reviews.filter((r) => r.reply_id === reviewId);
+  const getReplies = (reviewId) => test_reviews.filter((r) => r.reply_id === reviewId);
+
+  useEffect(() => {
+    setIsFav(color);
+  }, [color]);
 
   const handleReviewSubmit = (e) => {
     e.preventDefault();
     console.log("Submit Review:", {
-      newReviewRating,
-      newReviewText,
+      newReviewRating: newRating,
+      newReviewText: newReview,
       artifactId,
     });
-    setNewReviewText("");
-    setNewReviewRating(0);
+    setNewReview("");
+    setNewRating(0);
   };
 
   const handleReplySubmit = (e, parentId) => {
     e.preventDefault();
-    console.log("Submit Reply:", { parentId, replyText, artifactId });
-    setReplyingTo(null);
-    setReplyText("");
+    console.log("Submit Reply:", { parentId, replyText: reply, artifactId });
+    setReplyTo(null);
+    setReply("");
   };
 
   return (
     <>
-      {/*  Card  */}
+      {/* Card  */}
       <div className="card group w-72 h-112.5 shadow-sm relative overflow-hidden rounded-xl flex flex-col bg-stone-100">
         <button
-          onClick={() => setIsFavorite(!isFavorite)}
+          onClick={() => {
+            if (isFav) {
+              if (onFavclick) onFavclick(artifactId);
+            } else {
+              setIsFav(true);
+              if (onFavclick) onFavclick(artifactId);
+            }
+          }}
           className="absolute top-4 right-4 z-20 p-2 bg-black/40 backdrop-blur-sm rounded-full transition-colors hover:bg-black/60"
           aria-label="Add to favorites"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            fill={isFavorite ? "#f43f5e" : "none"}
+            fill={isFav ? "#f43f5e" : "none"}
             viewBox="0 0 24 24"
             strokeWidth={1.5}
-            stroke={isFavorite ? "#f43f5e" : "white"}
+            stroke={isFav ? "#f43f5e" : "white"}
             className="w-5 h-5 transition-transform active:scale-90"
           >
             <path
@@ -133,7 +145,7 @@ export default function Card({
         </div>
       </div>
 
-      {/*  Modal */}
+      {/* Modal */}
       {isModalOpen && (
         <dialog className="modal modal-open z-60 bg-black/60 backdrop-blur-sm ">
           <div className="modal-box max-w-5xl max-h-[90vh] overflow-y-auto p-0 bg-stone-100 text-stone-800 rounded-xl font-dmsans flex flex-col">
@@ -209,14 +221,21 @@ export default function Card({
 
                 <div className="mt-8 flex gap-3">
                   <button
-                    onClick={() => setIsFavorite(!isFavorite)}
+                    onClick={() => {
+                      if (isFav) {
+                        if (onFavclick) onFavclick(artifactId);
+                      } else {
+                        setIsFav(true);
+                        if (onFavclick) onFavclick(artifactId);
+                      }
+                    }}
                     className={`btn flex-1 ${
-                      isFavorite
+                      isFav
                         ? "btn-outline border-amber-500 text-amber-600 hover:bg-amber-50 hover:border-amber-600"
                         : "btn-primary bg-amber-400 text-black border-transparent hover:bg-amber-500"
                     }`}
                   >
-                    {isFavorite ? "Saved to Favorites" : "Add to Favorites"}
+                    {isFav ? "Saved to Favorites" : "Add to Favorites"}
                   </button>
                 </div>
               </div>
@@ -242,7 +261,7 @@ export default function Card({
                       type="radio"
                       name="new-rating"
                       className="rating-hidden"
-                      checked={newReviewRating === 0}
+                      checked={newRating === 0}
                       readOnly
                     />
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -251,15 +270,15 @@ export default function Card({
                         type="radio"
                         name="new-rating"
                         className="mask mask-star-2 bg-amber-500"
-                        checked={newReviewRating === star}
-                        onChange={() => setNewReviewRating(star)}
+                        checked={newRating === star}
+                        onChange={() => setNewRating(star)}
                       />
                     ))}
                   </div>
 
                   <textarea
-                    value={newReviewText}
-                    onChange={(e) => setNewReviewText(e.target.value)}
+                    value={newReview}
+                    onChange={(e) => setNewReview(e.target.value)}
                     className="textarea textarea-bordered w-full bg-white text-stone-800 border-stone-300 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                     placeholder="Share your thoughts about this artifact..."
                     rows="3"
@@ -325,22 +344,22 @@ export default function Card({
                       <div className="mt-3">
                         <button
                           onClick={() =>
-                            setReplyingTo(
-                              replyingTo === review.review_id
+                            setReplyTo(
+                              replyTo === review.review_id
                                 ? null
                                 : review.review_id,
                             )
                           }
                           className="text-xs font-bold text-stone-500 hover:text-amber-600 transition-colors uppercase tracking-wider"
                         >
-                          {replyingTo === review.review_id
+                          {replyTo === review.review_id
                             ? "Cancel Reply"
                             : "Reply"}
                         </button>
                       </div>
 
                       {/* Reply Form */}
-                      {replyingTo === review.review_id && (
+                      {replyTo === review.review_id && (
                         <form
                           onSubmit={(e) =>
                             handleReplySubmit(e, review.review_id)
@@ -349,8 +368,8 @@ export default function Card({
                         >
                           <input
                             type="text"
-                            value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)}
+                            value={reply}
+                            onChange={(e) => setReply(e.target.value)}
                             placeholder={`Replying to ${review.user_name}...`}
                             className="input input-sm input-bordered w-full bg-white border-stone-300 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                             required
@@ -364,7 +383,7 @@ export default function Card({
                         </form>
                       )}
 
-                      {/*  Replies */}
+                      {/* Replies */}
                       {getReplies(review.review_id).length > 0 && (
                         <div className="mt-5 space-y-4">
                           {getReplies(review.review_id).map((reply) => (

@@ -2,30 +2,33 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Card from "../components/common/Card";
 import { API_URL } from "../config";
+import Wishlist from "../components/curator/wishlist";
 
 export default function Search() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [isSearching, setIsSearching] = useState(false);
+  const [searching, setSearching] = useState(false);
 
   const [artifacts, setArtifacts] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
   // --- Suggestion States ---
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [sugg, setSugg] = useState([]);
+  const [showSugg, setShowSugg] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMuseum, setSelectedMuseum] = useState("");
-  const [selectedOrigin, setSelectedOrigin] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [sortOrder, setSortOrder] = useState("");
+  const [filterMuseum, setFilterMuseum] = useState("");
+  const [filterOrigin, setFilterOrigin] = useState("");
+  const [filterCat, setFilterCat] = useState("");
+  const [order, setOrder] = useState("");
   const [page, setPage] = useState(1);
 
   const [museums, setMuseums] = useState([]);
   const [origins, setOrigins] = useState([]);
   const [categories, setCategories] = useState([]);
+
+  const [wishlist, setWishlist] = useState([]);
 
   const [yearRange, setYearRange] = useState([-2000, 1500]);
   const minYear = -3000;
@@ -85,12 +88,13 @@ export default function Search() {
 
         const parseRes = await response.json();
 
-        // console.log("Check Filters Data:", parseRes);
+        console.log("Check Filters Data:", parseRes);
 
         if (response.ok) {
           setCategories(parseRes.categories);
           setOrigins(parseRes.origins);
           setMuseums(parseRes.museums);
+          setWishlist(parseRes.wishlist);
         }
       } catch (err) {
         console.error("Failed to fetch filters:", err.message);
@@ -123,29 +127,100 @@ export default function Search() {
         // console.log("Data :", data);
 
         if (response.ok) {
-          setSuggestions(data);
-          setShowSuggestions(true);
+          setSugg(data);
+          setShowSugg(true);
         }
       } catch (error) {
         console.error("Suggestions failed:", error.message);
       }
     } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
+      setSugg([]);
+      setShowSugg(false);
+    }
+  };
+  const [popMsg, setPopMsg] = useState(null);
+
+  const handleAddFav = async (artifactId) => {
+    const isAlreadyFav = wishlist.some(
+      (item) => item.artifact_id === artifactId,
+    );
+
+    if (isAlreadyFav) {
+      setPopMsg("Artifact is already in wishlist!");
+      setTimeout(() => setPopMsg(null), 3000);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/search/fav`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          token: token,
+        },
+        body: JSON.stringify({ artifact_id: artifactId }),
+      });
+
+      const res = await response.json();
+
+      setPopMsg(res.msg || res.error);
+
+      if (response.ok) {
+        const addedArtifact = artifacts.find(
+          (a) => a.artifact_id === artifactId,
+        );
+        if (addedArtifact) {
+          setWishlist([...wishlist, addedArtifact]);
+        }
+      }
+    } catch (error) {
+      setPopMsg("An error occurred. Please try again.");
+    } finally {
+      setTimeout(() => setPopMsg(null), 3000);
+    }
+  };
+
+  const handleRemoveFav = async (artifactId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/search/remove`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          token: token,
+        },
+        body: JSON.stringify({ artifact_id: artifactId }),
+      });
+
+      const res = await response.json();
+
+      setPopMsg(res.msg || res.error);
+
+      if (response.ok) {
+        const updated = wishlist.filter(
+          (item) => item.artifact_id !== artifactId,
+        );
+        setWishlist(updated);
+      }
+    } catch (error) {
+      setPopMsg("An error occurred. Please try again.");
+    } finally {
+      setTimeout(() => setPopMsg(null), 3000);
     }
   };
 
   const fetchArtifacts = async () => {
-    setIsSearching(true);
-    setShowSuggestions(false);
+    setSearching(true);
+    setShowSugg(false);
     try {
       const params = new URLSearchParams();
 
       if (searchTerm) params.append("letters", searchTerm);
-      if (selectedMuseum) params.append("museum", selectedMuseum);
-      if (selectedOrigin) params.append("origin", selectedOrigin);
-      if (selectedCategory) params.append("category", selectedCategory);
-      if (sortOrder) params.append("order", sortOrder);
+      if (filterMuseum) params.append("museum", filterMuseum);
+      if (filterOrigin) params.append("origin", filterOrigin);
+      if (filterCat) params.append("category", filterCat);
+      if (order) params.append("order", order);
 
       params.append("start", yearRange[0]);
       params.append("end", yearRange[1]);
@@ -166,21 +241,20 @@ export default function Search() {
     } catch (error) {
       console.error("Search failed:", error.message);
     } finally {
-      setIsSearching(false);
+      setSearching(false);
     }
   };
 
   useEffect(() => {
     fetchArtifacts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    selectedMuseum,
-    selectedOrigin,
-    selectedCategory,
-    sortOrder,
-    yearRange,
-    page,
-  ]);
+  }, [filterMuseum, filterOrigin, filterCat, order, yearRange, page]);
+
+  const [isWishlistVisible, setWishlistVisible] = useState(false);
+
+  const toggleWishlist = () => {
+    setWishlistVisible((prev) => !prev);
+  };
 
   return (
     <>
@@ -268,11 +342,12 @@ export default function Search() {
             </ul>
           </div>
           <div className="navbar-end">
-            <div className="avatar avatar-online avatar-placeholder mr-5">
-              <div className="bg-white text-neutral-content w-10 rounded-full ring ring-offset-2 ring-offset-dark-chocolate ring-white">
-                <span className="text-black">
-                  {user?.USERNAME ? user.USERNAME.charAt(0).toUpperCase() : "U"}
-                </span>
+            <div className="avatar avatar-online">
+              <div className="w-12 rounded-full">
+                <img
+                  src={user?.avatar_url || "https://placehold.co/150"}
+                  alt="User Avatar"
+                />
               </div>
             </div>
           </div>
@@ -305,10 +380,10 @@ export default function Search() {
                   onChange={handleSearchInput}
                   onKeyDown={(e) => e.key === "Enter" && fetchArtifacts()}
                   onFocus={() => {
-                    if (suggestions.length > 0) setShowSuggestions(true);
+                    if (sugg.length > 0) setShowSugg(true);
                   }}
                   onBlur={() => {
-                    setTimeout(() => setShowSuggestions(false), 200);
+                    setTimeout(() => setShowSugg(false), 200);
                   }}
                   placeholder="Search for sculptures, authors, artifacts..."
                   className="input input-bordered join-item w-full bg-white h-14 text-lg focus:outline-none border-none pl-6 text-stone-900"
@@ -322,15 +397,15 @@ export default function Search() {
               </div>
 
               {/* Suggestions Dropdown */}
-              {showSuggestions && suggestions.length > 0 && (
+              {showSugg && sugg.length > 0 && (
                 <div className="absolute top-full left-0 w-[calc(100%-110px)] mt-2 bg-white rounded-xl shadow-2xl z-50 overflow-hidden border border-stone-200 text-left">
-                  {suggestions.map((item, index) => (
+                  {sugg.map((item, index) => (
                     <div
                       key={index}
                       className="flex items-center gap-4 p-3 hover:bg-stone-50 cursor-pointer border-b border-stone-100 last:border-none transition-colors"
                       onClick={() => {
                         setSearchTerm(item.artifact_name);
-                        setShowSuggestions(false);
+                        setShowSugg(false);
                         fetchArtifacts();
                       }}
                     >
@@ -367,9 +442,9 @@ export default function Search() {
                     className="text-xs text-orange-700 hover:underline font-medium"
                     onClick={() => {
                       setSearchTerm("");
-                      setSelectedMuseum("");
-                      setSelectedOrigin("");
-                      setSelectedCategory("");
+                      setFilterMuseum("");
+                      setFilterOrigin("");
+                      setFilterCat("");
                       setYearRange([-2000, 1500]);
                     }}
                   >
@@ -447,8 +522,8 @@ export default function Search() {
                     Museum
                   </h4>
                   <select
-                    value={selectedMuseum}
-                    onChange={(e) => setSelectedMuseum(e.target.value)}
+                    value={filterMuseum}
+                    onChange={(e) => setFilterMuseum(e.target.value)}
                     className="select select-bordered w-full bg-white border-stone-300 text-stone-700 focus:outline-amber-400"
                   >
                     <option value="">All Museums</option>
@@ -466,8 +541,8 @@ export default function Search() {
                     Origin
                   </h4>
                   <select
-                    value={selectedOrigin}
-                    onChange={(e) => setSelectedOrigin(e.target.value)}
+                    value={filterOrigin}
+                    onChange={(e) => setFilterOrigin(e.target.value)}
                     className="select select-bordered w-full bg-white border-stone-300 text-stone-700 focus:outline-amber-400"
                   >
                     <option value="">All Origins</option>
@@ -489,12 +564,10 @@ export default function Search() {
                   >
                     <input
                       type="checkbox"
-                      checked={selectedCategory === c.category_name}
+                      checked={filterCat === c.category_name}
                       onChange={() =>
-                        setSelectedCategory(
-                          selectedCategory === c.category_name
-                            ? ""
-                            : c.category_name,
+                        setFilterCat(
+                          filterCat === c.category_name ? "" : c.category_name,
                         )
                       }
                       className="checkbox checkbox-sm border-stone-400 checked:bg-amber-400 checked:border-amber-400"
@@ -514,8 +587,8 @@ export default function Search() {
                   {totalItems} items found
                 </h2>
                 <select
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
+                  value={order}
+                  onChange={(e) => setOrder(e.target.value)}
                   className="select select-sm select-bordered w-full max-w-xs bg-white border-stone-300 text-stone-700"
                 >
                   <option value="" disabled>
@@ -529,7 +602,7 @@ export default function Search() {
 
               {/* Artefact Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {isSearching ? (
+                {searching ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <div
                       key={i}
@@ -540,23 +613,32 @@ export default function Search() {
                     </div>
                   ))
                 ) : artifacts.length > 0 ? (
-                  artifacts.map((item, index) => (
-                    <Card
-                      key={index}
-                      artifactId={item.artifact_id}
-                      name={item.artifact_name}
-                      image={item.picture_url}
-                      description={item.description}
-                      creator={item.creator}
-                      time_period={item.time_period}
-                      acquisition_date={new Date(
-                        item.acquisition_date,
-                      ).toLocaleDateString()}
-                      museum_name={item.museum_name}
-                      category={item.category_name}
-                      origin={item.origin}
-                    />
-                  ))
+                  artifacts.map((item, index) => {
+                    // check in wishlist
+                    const isInWishlist = wishlist.some(
+                      (favItem) => favItem.artifact_id === item.artifact_id,
+                    );
+
+                    return (
+                      <Card
+                        key={item.artifact_id || index}
+                        artifactId={item.artifact_id}
+                        name={item.artifact_name}
+                        image={item.picture_url}
+                        description={item.description}
+                        creator={item.creator}
+                        time_period={item.time_period}
+                        acquisition_date={new Date(
+                          item.acquisition_date,
+                        ).toLocaleDateString()}
+                        museum_name={item.museum_name}
+                        category={item.category_name}
+                        origin={item.origin}
+                        color={isInWishlist}
+                        onFavclick={handleAddFav}
+                      />
+                    );
+                  })
                 ) : (
                   <div className="col-span-full text-center py-12 text-stone-500 text-lg font-medium">
                     No artifacts found matching your criteria. Try adjusting
@@ -564,6 +646,41 @@ export default function Search() {
                   </div>
                 )}
               </div>
+
+              {/* Wishlist fab */}
+              <div className="fab">
+                <button
+                  className="btn btn-lg btn-circle btn-primary bg-black/80"
+                  onClick={toggleWishlist}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="#f43f5e"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="#f43f5e"
+                    className="w-5 h-5 transition-transform active:scale-90"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {isWishlistVisible && (
+                <div className="fixed bottom-10 right-10 z-50 bg-white shadow-lg rounded-lg p-4">
+                  <Wishlist items={wishlist} handleRemove={handleRemoveFav} />
+                </div>
+              )}
+
+              {popMsg && (
+                <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
+                  {popMsg}
+                </div>
+              )}
 
               {/* Pagination */}
               {totalPages > 0 && (

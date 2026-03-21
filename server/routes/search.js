@@ -61,7 +61,7 @@ router.get("/", authorization, async (req , res)=>{
             return res.status(403).json("Only Curator Authorized");
         }
         
-        let query = `SELECT ARTIFACT_NAME , ARTIFACTS.DESCRIPTION , ARTIFACTS.CREATOR , ARTIFACTS.PICTURE_URL ,
+        let query = `SELECT ARTIFACTS.ARTIFACT_ID, ARTIFACT_NAME , ARTIFACTS.DESCRIPTION , ARTIFACTS.CREATOR , ARTIFACTS.PICTURE_URL ,
         ARTIFACTS.TIME_PERIOD, ARTIFACTS.ACQUISITION_DATE, ARTIFACTS.ORIGIN, CATEGORIES.CATEGORY_NAME, MUSEUMS.MUSEUM_NAME
                      FROM ARTIFACTS
                      JOIN MUSEUMS ON ARTIFACTS.MUSEUM_ID = MUSEUMS.MUSEUM_ID
@@ -153,10 +153,11 @@ router.get("/", authorization, async (req , res)=>{
 });
 
 
-// Get filters
+// Get filters & wishlist items
 router.get("/filters", authorization, async (req , res)=>{
 
     try {
+        const user_id = req.user?.id || req.user;
 
         if(req.user?.role && req.user.role !== "curator"){
             return res.status(403).json("Only Curator Authorized");
@@ -178,11 +179,89 @@ router.get("/filters", authorization, async (req , res)=>{
             FROM MUSEUMS`
         );
 
-        res.json({ categories: categories.rows, origins: origins.rows, museums: museums.rows});
+        let wishlist = await pool.query(
+            `SELECT FAVORITES.ARTIFACT_ID, ARTIFACT_NAME , CREATOR , PICTURE_URL
+            FROM FAVORITES
+            JOIN ARTIFACTS ON FAVORITES.ARTIFACT_ID = ARTIFACTS.ARTIFACT_ID
+            WHERE USER_ID = $1
+            `, [user_id]
+        );
+
+        res.json({ categories: categories.rows, origins: origins.rows, museums: museums.rows, wishlist: wishlist.rows});
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 
 });
+
+// Add to favorites
+router.post("/fav", authorization, async(req, res)=>{
+
+    const client = await pool.connect();
+    try {
+
+        const user_id = req.user?.id || req.user;
+        if(req.user?.role && req.user.role !== "curator"){
+            return res.status(403).json("Only Curator Authorized");
+        }
+        const artifact_id = req.body.artifact_id;
+
+
+        
+        await client.query("BEGIN");
+            
+        const insert = await client.query(
+                `INSERT INTO FAVORITES 
+                (USER_ID, ARTIFACT_ID) 
+                VALUES ($1, $2)`,
+                [user_id, artifact_id]
+        );
+        await client.query("COMMIT");
+        res.json({ msg: "Artifact added to favorites" });
+
+        
+    } catch (error) {
+        await client.query("ROLLBACK");
+        res.status(500).json({ error: error.message });
+    }
+    finally{
+        client.release();
+    }
+})
+
+// Remove from favorites
+router.post("/remove", authorization, async(req, res)=>{
+
+        const client = await pool.connect();
+
+    try {
+        
+        const user_id = req.user?.id || req.user;
+        if(req.user?.role && req.user.role !== "curator"){
+            return res.status(403).json("Only Curator Authorized");
+        }
+
+        await client.query("BEGIN");
+
+        const artifact_id = req.body.artifact_id;
+        const remove = await client.query(
+            `DELETE
+            FROM FAVORITES
+            WHERE USER_ID = $1 AND ARTIFACT_ID = $2`,
+            [user_id, artifact_id]
+        );
+
+        await client.query("COMMIT");
+        res.json({ msg: "Artifact removed from favorites" });
+    } catch (error) {
+        await client.query("ROLLBACK");
+        res.status(500).json({ error: error.message });
+    }
+    finally{
+        client.release();
+    }
+})
+
+
 
 module.exports = router;

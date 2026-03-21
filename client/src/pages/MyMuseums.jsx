@@ -233,7 +233,7 @@ export default function MyMuseums () {
               <div className="avatar avatar-online">
                 <div className="w-12 rounded-full">
                   <img
-                    src={user.avatar_url || "https://placehold.co/150"}
+                    src={user?.avatar_url || "https://placehold.co/150"}
                     alt="User Avatar"
                   />
                 </div>

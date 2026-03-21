@@ -38,6 +38,8 @@ router.get("/", authorization, async (req, res) => {
 
 // create a new museum
 router.post("/", authorization, async (req, res) => {
+
+    const client = await pool.connect();
     try {
         if(req.user.role !== "curator"){
             return res.status(403).json("Only Curator Authorized");
@@ -45,17 +47,22 @@ router.post("/", authorization, async (req, res) => {
         const { mini_museum_name, description, picture_url } = req.body; 
         const curator_id = req.user.id;
 
-        const newMuseum = await pool.query(
+        await client.query("BEGIN");
+        const newMuseum = await client.query(
             `INSERT INTO MINI_MUSEUMS (CURATOR_ID, MINI_MUSEUM_NAME, DESCRIPTION, PICTURE_URL)
             VALUES ($1, $2, $3, $4)
             RETURNING *`, 
             [curator_id, mini_museum_name, description, picture_url]
         );
-        
+        await client.query("COMMIT");
         res.json(newMuseum.rows[0]);
     } catch (error) {
         console.error(error.message);
+        await client.query("ROLLBACK");
         res.status(500).json("Server Error");
+    }
+    finally{
+        client.release();
     }
 });
 
