@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_URL } from "../../config";
 
 const test_reviews = [
   {
@@ -46,7 +47,7 @@ export default function Card({
   museum_name = "Unknown",
   category = "Unknown",
   origin = "Unknown",
-  color = false, 
+  color = false,
   artifactId = 1,
   onFavclick,
 }) {
@@ -59,11 +60,32 @@ export default function Card({
   const [reply, setReply] = useState("");
 
   const mainReviews = test_reviews.filter((r) => r.reply_id === null);
-  const getReplies = (reviewId) => test_reviews.filter((r) => r.reply_id === reviewId);
+  const getReplies = (reviewId) =>
+    test_reviews.filter((r) => r.reply_id === reviewId);
 
   useEffect(() => {
     setIsFav(color);
   }, [color]);
+
+  const handleAddView = async () => {
+    try {
+      const response = await fetch(`${API_URL}/card/view`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "token" : localStorage.getItem("token"),
+        },
+        body: JSON.stringify({ artifact_id: artifactId }),
+      });
+
+      const res = await response.json();
+      if (!response.ok) {
+        throw new Error(res.msg);
+      }
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
 
   const handleReviewSubmit = (e) => {
     e.preventDefault();
@@ -137,7 +159,10 @@ export default function Card({
             {description}
           </p>
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setIsModalOpen(true);
+              handleAddView();
+            }}
             className="btn btn-primary mt-4 bg-accent-yellow text-black border-transparent hover:bg-amber-500"
           >
             Read More

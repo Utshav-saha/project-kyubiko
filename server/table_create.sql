@@ -287,6 +287,44 @@ BEFORE INSERT ON artifacts
 FOR EACH ROW
 EXECUTE FUNCTION check_duplicate_artifact();
 
+-- artifact view count trigger - 1 for each users unique view
+CREATE OR REPLACE FUNCTION increment_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE ARTIFACTS
+    SET ARTIFACT_VIEWS = ARTIFACT_VIEWS + 1
+    WHERE ARTIFACT_ID = NEW.ARTIFACT_ID;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER increase_view_count
+AFTER INSERT ON ARTIFACTS_VIEWS
+FOR EACH ROW
+EXECUTE FUNCTION increment_count();
+
+
+-- keep latest 20 artifact views for each user
+CREATE OR REPLACE FUNCTION last_10_records()
+RETURNS TRIGGER AS $$
+BEGIN
+    DELETE FROM ARTIFACTS_VIEWS
+    WHERE ARTIFACT_VIEW_ID IN (
+        SELECT ARTIFACT_VIEW_ID
+        FROM ARTIFACTS_VIEWS
+        WHERE USER_ID = NEW.USER_ID
+        ORDER BY VIEW_TIME DESC
+        OFFSET 20 // -- 21 no ta ashbe 
+    )
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER LIMIT_VIEWS
+AFTER INSERT ON ARTIFACTS_VIEWS
+FOR EACH ROW
+EXECUTE FUNCTION last_10_records();
+
 
 -- // Functions
 create or replace function get_category(p_department varchar)
