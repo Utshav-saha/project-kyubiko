@@ -287,10 +287,13 @@ export default function MyMuseums () {
 
           {/* Museum Cards */}
           {museums.map((museum) => (
-            <div
-              key={museum.mini_museum_id} // Updated Primary Key
+
+            <Link
+              to={`/view-museum/${museum.mini_museum_id}`}
+              key={museum.mini_museum_id} 
               className="group h-112.5 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 relative flex flex-col border border-dark-chocolate/10"
             >
+            
               <div className="relative h-[65%] overflow-hidden">
                 {/* Updated Image Column */}
                 <img
@@ -329,7 +332,7 @@ export default function MyMuseums () {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

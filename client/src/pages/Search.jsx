@@ -140,47 +140,6 @@ export default function Search() {
   };
   const [popMsg, setPopMsg] = useState(null);
 
-  const handleAddFav = async (artifactId) => {
-    const isAlreadyFav = wishlist.some(
-      (item) => item.artifact_id === artifactId,
-    );
-
-    if (isAlreadyFav) {
-      setPopMsg("Artifact is already in wishlist!");
-      setTimeout(() => setPopMsg(null), 3000);
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/search/fav`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          token: token,
-        },
-        body: JSON.stringify({ artifact_id: artifactId }),
-      });
-
-      const res = await response.json();
-
-      setPopMsg(res.msg || res.error);
-
-      if (response.ok) {
-        const addedArtifact = artifacts.find(
-          (a) => a.artifact_id === artifactId,
-        );
-        if (addedArtifact) {
-          setWishlist([...wishlist, addedArtifact]);
-        }
-      }
-    } catch (error) {
-      setPopMsg("An error occurred. Please try again.");
-    } finally {
-      setTimeout(() => setPopMsg(null), 3000);
-    }
-  };
-
   const handleRemoveFav = async (artifactId) => {
     try {
       const token = localStorage.getItem("token");
@@ -635,7 +594,10 @@ export default function Search() {
                         category={item.category_name}
                         origin={item.origin}
                         color={isInWishlist}
-                        onFavclick={handleAddFav}
+                        userRole={localStorage.getItem("role")}
+                        wishlist={wishlist}
+                        setWishlist={setWishlist}
+                        setPopMsg={setPopMsg}
                       />
                     );
                   })

@@ -49,7 +49,10 @@ export default function Card({
   origin = "Unknown",
   color = false,
   artifactId = 1,
-  onFavclick,
+  wishlist,
+  setWishlist,
+  setPopMsg,
+  userRole,
 }) {
   const [isFav, setIsFav] = useState(color);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -73,7 +76,7 @@ export default function Card({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "token" : localStorage.getItem("token"),
+          token: localStorage.getItem("token"),
         },
         body: JSON.stringify({ artifact_id: artifactId }),
       });
@@ -105,6 +108,53 @@ export default function Card({
     setReply("");
   };
 
+  const handleAddFav = async (artifactId, wishlist, setWishlist, setPopMsg) => {
+    // for manager part
+    if (userRole !== "curator") {
+      return;
+    }
+
+    const isAlreadyFav = wishlist.some(
+      (item) => item.artifact_id === artifactId,
+    );
+
+    if (isAlreadyFav) {
+      setPopMsg("Artifact is already in wishlist!");
+      setTimeout(() => setPopMsg(null), 3000);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/card/fav`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          token: token,
+        },
+        body: JSON.stringify({ artifact_id: artifactId }),
+      });
+
+      const res = await response.json();
+
+      setPopMsg(res.msg || res.error);
+
+      if (response.ok) {
+        const newItem = {
+          artifact_id: artifactId,
+          artifact_name: name,
+          creator: creator,
+          picture_url: image,
+        };
+        setWishlist([...wishlist, newItem]);
+      }
+    } catch (error) {
+      setPopMsg("An error occurred. Please try again.");
+    } finally {
+      setTimeout(() => setPopMsg(null), 3000);
+    }
+  };
+
   return (
     <>
       {/* Card  */}
@@ -112,10 +162,10 @@ export default function Card({
         <button
           onClick={() => {
             if (isFav) {
-              if (onFavclick) onFavclick(artifactId);
+              handleAddFav(artifactId, wishlist, setWishlist, setPopMsg);
             } else {
               setIsFav(true);
-              if (onFavclick) onFavclick(artifactId);
+              handleAddFav(artifactId, wishlist, setWishlist, setPopMsg);
             }
           }}
           className="absolute top-4 right-4 z-20 p-2 bg-black/40 backdrop-blur-sm rounded-full transition-colors hover:bg-black/60"
@@ -248,10 +298,20 @@ export default function Card({
                   <button
                     onClick={() => {
                       if (isFav) {
-                        if (onFavclick) onFavclick(artifactId);
+                        handleAddFav(
+                          artifactId,
+                          wishlist,
+                          setWishlist,
+                          setPopMsg,
+                        );
                       } else {
                         setIsFav(true);
-                        if (onFavclick) onFavclick(artifactId);
+                        handleAddFav(
+                          artifactId,
+                          wishlist,
+                          setWishlist,
+                          setPopMsg,
+                        );
                       }
                     }}
                     className={`btn flex-1 ${

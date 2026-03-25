@@ -38,6 +38,40 @@ router.post("/view", authorization, async(req, res)=>{
     finally{
         client.release();
     }
+});
+
+router.post("/fav", authorization, async(req, res)=>{
+
+    const client = await pool.connect();
+    try {
+
+        const user_id = req.user?.id || req.user;
+        if(req.user?.role && req.user.role !== "curator"){
+            return res.status(403).json("Only Curator Authorized");
+        }
+        const artifact_id = req.body.artifact_id;
+
+
+        
+        await client.query("BEGIN");
+            
+        const insert = await client.query(
+                `INSERT INTO FAVORITES 
+                (USER_ID, ARTIFACT_ID) 
+                VALUES ($1, $2)`,
+                [user_id, artifact_id]
+        );
+        await client.query("COMMIT");
+        res.json({ msg: "Artifact added to favorites" });
+
+        
+    } catch (error) {
+        await client.query("ROLLBACK");
+        res.status(500).json({ error: error.message });
+    }
+    finally{
+        client.release();
+    }
 })
 
 module.exports = router;

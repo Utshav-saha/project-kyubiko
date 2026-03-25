@@ -1,9 +1,9 @@
 import React from "react";
+import { Trash2 } from "lucide-react";
 
-export default function Wishlist({ items , handleRemove }) {
+export default function Wishlist({ items, handleRemove, actionRenderer }) {
   return (
-    <ul className="list bg-old-paper text-dark-chocolate font-dmsans rounded-box shadow-xl max-h-96 overflow-y-auto">
-      {/* Header */}
+    <ul className="list bg-old-paper text-dark-chocolate font-dmsans rounded-box shadow-xl max-h-[60vh] overflow-y-auto w-96 border border-brown/30">
       <li className="p-4 pb-2 text-sm font-playfair text-accent-orange font-bold tracking-wide uppercase sticky top-0 bg-old-paper z-10 border-b border-brown/20">
         Your Favourite Artifacts
       </li>
@@ -14,7 +14,7 @@ export default function Wishlist({ items , handleRemove }) {
         </li>
       ) : (
         items.map((item, index) => (
-          <li key={index} className="list-row hover:bg-brown/10 border-brown/20 transition-colors">
+          <li key={index} className="list-row hover:bg-brown/10 border-brown/20 transition-colors bg-old-paper">
             <div>
               <img
                 className="size-10 rounded-box object-cover bg-stone-200"
@@ -29,25 +29,18 @@ export default function Wishlist({ items , handleRemove }) {
               </div>
             </div>
             
-            {/* Trash Button */}
-            <button className="btn btn-square btn-ghost text-dark-chocolate hover:bg-red-100 hover:text-red-500" onClick={() => handleRemove(item.artifact_id)}>
-              <svg
-                className="size-[1.2em]"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M3 6h18" />
-                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                <line x1="10" x2="10" y1="11" y2="17" />
-                <line x1="14" x2="14" y1="11" y2="17" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2 z-10">
+              {actionRenderer ? (
+                actionRenderer(item)
+              ) : (
+                <button 
+                  className="btn btn-square btn-ghost text-dark-chocolate hover:bg-red-100 hover:text-red-500" 
+                  onClick={() => handleRemove && handleRemove(item.artifact_id)}
+                >
+                  <Trash2 size={18} />
+                </button>
+              )}
+            </div>
           </li>
         ))
       )}

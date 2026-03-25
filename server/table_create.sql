@@ -109,17 +109,6 @@ VALUES
 (2, 1);
 
 
-create table collections (
-    collection_id SERIAL PRIMARY KEY,
-
-    mini_museum_id INTEGER REFERENCES mini_museums(mini_museum_id) on delete CASCADE,
-    artifact_id INTEGER REFERENCES artifacts(artifact_id) on delete CASCADE
-);
-INSERT INTO collections (mini_museum_id, artifact_id)
-VALUES
-(1, 1);
-
-
 CREATE table mini_museums (
     mini_museum_id SERIAL PRIMARY KEY,
     mini_museum_name VARCHAR(100) NOT NULL,
@@ -262,6 +251,16 @@ VALUES
 
 
 
+CREATE TABLE sections (
+    id SERIAL PRIMARY KEY,
+    mini_museum_id INTEGER NOT NULL, 
+    name VARCHAR(100) NOT NULL,
+    position INTEGER NOT NULL DEFAULT 1,
+    artifact_id INTEGER,
+    
+    FOREIGN KEY (mini_museum_id) REFERENCES mini_museums(mini_museum_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (artifact_id) REFERENCES artifacts(artifact_id) ON DELETE CASCADE ON UPDATE CASCADE
+)
 
 -- // Triggers
 CREATE OR REPLACE FUNCTION check_duplicate_artifact() 
@@ -370,6 +369,18 @@ begin
 end;
 $$ language plpgsql
 
+
+CREATE OR REPLACE FUNCTION GET_POSITION(p_museum_id INTEGER)
+RETURNS INTEGER AS $$
+DECLARE
+    max_position INTEGER;
+BEGIN
+    SELECT MAX(position) INTO max_position
+    FROM sections
+    WHERE mini_museum_id = p_museum_id;
+    RETURN COALESCE(max_position, 0) + 1;
+END;
+$$ LANGUAGE plpgsql;
 
 // -- like count - procedure
 // -- views count + add to artifacts_views trigger

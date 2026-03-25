@@ -13,6 +13,7 @@ app.use("/auth", require("./routes/auth"));
 app.use("/my-museums", require("./routes/myMuseums"));
 app.use("/search", require("./routes/search"));
 app.use("/card", require("./routes/card"));
+app.use("/view", require("./routes/view"));
 
 
 

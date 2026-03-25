@@ -195,39 +195,39 @@ router.get("/filters", authorization, async (req , res)=>{
 });
 
 // Add to favorites
-router.post("/fav", authorization, async(req, res)=>{
+// router.post("/fav", authorization, async(req, res)=>{
 
-    const client = await pool.connect();
-    try {
+//     const client = await pool.connect();
+//     try {
 
-        const user_id = req.user?.id || req.user;
-        if(req.user?.role && req.user.role !== "curator"){
-            return res.status(403).json("Only Curator Authorized");
-        }
-        const artifact_id = req.body.artifact_id;
+//         const user_id = req.user?.id || req.user;
+//         if(req.user?.role && req.user.role !== "curator"){
+//             return res.status(403).json("Only Curator Authorized");
+//         }
+//         const artifact_id = req.body.artifact_id;
 
 
         
-        await client.query("BEGIN");
+//         await client.query("BEGIN");
             
-        const insert = await client.query(
-                `INSERT INTO FAVORITES 
-                (USER_ID, ARTIFACT_ID) 
-                VALUES ($1, $2)`,
-                [user_id, artifact_id]
-        );
-        await client.query("COMMIT");
-        res.json({ msg: "Artifact added to favorites" });
+//         const insert = await client.query(
+//                 `INSERT INTO FAVORITES 
+//                 (USER_ID, ARTIFACT_ID) 
+//                 VALUES ($1, $2)`,
+//                 [user_id, artifact_id]
+//         );
+//         await client.query("COMMIT");
+//         res.json({ msg: "Artifact added to favorites" });
 
         
-    } catch (error) {
-        await client.query("ROLLBACK");
-        res.status(500).json({ error: error.message });
-    }
-    finally{
-        client.release();
-    }
-})
+//     } catch (error) {
+//         await client.query("ROLLBACK");
+//         res.status(500).json({ error: error.message });
+//     }
+//     finally{
+//         client.release();
+//     }
+// })
 
 // Remove from favorites
 router.post("/remove", authorization, async(req, res)=>{
