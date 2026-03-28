@@ -15,6 +15,7 @@ app.use("/search", require("./routes/search"));
 app.use("/card", require("./routes/card"));
 app.use("/view", require("./routes/view"));
 app.use("/explore", require("./routes/explore"));
+app.use("/museum", require("./routes/museum"));
 
 
 

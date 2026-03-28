@@ -856,7 +856,11 @@ export default function Explore() {
               <span className="text-accent-orange">{archiveTotal}</span> museums found
             </h3>
             <div className="relative w-full sm:w-90">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-chocolate/40" size={18} />
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-dark-chocolate/75"
+                size={16}
+                aria-hidden="true"
+              />
               <input
                 type="text"
                 value={archiveSearchQuery}
@@ -953,7 +957,11 @@ export default function Explore() {
 
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-8">
               <div className="relative w-full lg:w-100">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-chocolate/40" size={18} />
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-dark-chocolate/75"
+                  size={16}
+                  aria-hidden="true"
+                />
                 <input
                   type="text"
                   value={communitySearchQuery}
