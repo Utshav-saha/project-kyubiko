@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Plus, X, ListPlus, Trash2, ArrowRightCircle } from "lucide-react";
 import { API_URL } from "../config";
+import UserAvatarMenu from "../components/common/UserAvatarMenu";
 
 import Card from "../components/common/Card";
 import Wishlist from "../components/curator/wishlist";
@@ -270,7 +271,13 @@ export default function ViewMuseum() {
                 <Link to="/">Home</Link>
               </li>
               <li>
+                <Link to="/my-museums">My Museums</Link>
+              </li>
+              <li>
                 <Link to="/explore">Explore</Link>
+              </li>
+              <li>
+                <Link to="/search">Search</Link>
               </li>
             </ul>
           </div>
@@ -280,6 +287,7 @@ export default function ViewMuseum() {
                 {museumInfo.user?.username}
               </span>
             </div>
+            <UserAvatarMenu user={museumInfo.user} />
           </div>
         </div>
 

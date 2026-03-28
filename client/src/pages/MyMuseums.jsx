@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { API_URL, CLOUD_NAME, UPLOAD_PRESET } from "../config";
+import UserAvatarMenu from "../components/common/UserAvatarMenu";
 
 export default function MyMuseums () {
   const navigate = useNavigate();
@@ -198,13 +199,19 @@ export default function MyMuseums () {
                   className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow text-white"
                 >
                   <li>
-                    <a>Home</a>
+                    <Link to="/">Home</Link>
                   </li>
                   <li>
-                    <a>Explore</a>
+                    <Link to="/my-museums">My Museums</Link>
                   </li>
                   <li>
-                    <a>Search</a>
+                    <Link to="/explore">Explore</Link>
+                  </li>
+                  <li>
+                    <Link to="/search">Search</Link>
+                  </li>
+                  <li>
+                    <Link to="/profile">Profile</Link>
                   </li>
                 </ul>
               </div>
@@ -216,10 +223,16 @@ export default function MyMuseums () {
                   <Link to="/">Home</Link>
                 </li>
                 <li>
+                  <Link to="/my-museums" className="text-accent-yellow">My Museums</Link>
+                </li>
+                <li>
                   <Link to="/explore">Explore</Link>
                 </li>
                 <li>
                   <Link to="/search">Search</Link>
+                </li>
+                <li>
+                  <Link to="/profile">Profile</Link>
                 </li>
               </ul>
             </div>
@@ -230,14 +243,7 @@ export default function MyMuseums () {
                   {user.username}
                 </span>
               </div>
-              <div className="avatar avatar-online">
-                <div className="w-12 rounded-full">
-                  <img
-                    src={user?.avatar_url || "https://placehold.co/150"}
-                    alt="User Avatar"
-                  />
-                </div>
-              </div>
+              <UserAvatarMenu user={user} />
             </div>
           </div>
         </div>

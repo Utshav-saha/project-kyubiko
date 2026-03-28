@@ -6,6 +6,8 @@ import Search from "./pages/Search";
 import Explore from "./pages/Explore";
 import MyMuseums from "./pages/MyMuseums";
 import ViewMuseum from "./pages/ViewMuseum";
+import GoToMuseum from "./pages/GoToMuseum";
+import Profile from "./pages/Profile";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -23,6 +25,8 @@ function App() {
             <Route path="/explore" element={<Explore />} />
             <Route path="/my-museums" element={<MyMuseums />} />
             <Route path="/view-museum/:id" element={<ViewMuseum />} />
+            <Route path="/go-to-museum/:id" element={<GoToMuseum />} />
+            <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
     </>

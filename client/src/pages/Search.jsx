@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import Card from "../components/common/Card";
 import { API_URL } from "../config";
 import Wishlist from "../components/curator/wishlist";
+import UserAvatarMenu from "../components/common/UserAvatarMenu";
 
 export default function Search() {
   const navigate = useNavigate();
@@ -275,13 +276,13 @@ export default function Search() {
                 className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow text-black"
               >
                 <li>
-                  <a>My Museums</a>
+                  <Link to="/my-museums">My Museums</Link>
                 </li>
                 <li>
-                  <a>Explore</a>
+                  <Link to="/explore">Explore</Link>
                 </li>
                 <li>
-                  <a>Book a Tour</a>
+                  <Link to="/profile">Profile</Link>
                 </li>
               </ul>
             </div>
@@ -293,22 +294,15 @@ export default function Search() {
                 <Link to="/my-museums">My museums</Link>
               </li>
               <li>
-                <a>Explore</a>
+                <Link to="/explore">Explore</Link>
               </li>
               <li>
-                <a>Book a Tour</a>
+                <Link to="/profile">Profile</Link>
               </li>
             </ul>
           </div>
           <div className="navbar-end">
-            <div className="avatar avatar-online">
-              <div className="w-12 rounded-full">
-                <img
-                  src={user?.avatar_url || "https://placehold.co/150"}
-                  alt="User Avatar"
-                />
-              </div>
-            </div>
+            <UserAvatarMenu user={user} />
           </div>
         </div>
 

@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
 import { Search, Filter, ChevronDown, X, MapPin, Heart, User } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { API_URL } from '../config';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import UserAvatarMenu from '../components/common/UserAvatarMenu';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -15,54 +18,172 @@ L.Icon.Default.mergeOptions({
 
 gsap.registerPlugin(ScrollTrigger);
 
-// --- Dummy Museum Data ---
-const dummyMuseums = [
-  
-  
-  { 
-    id: 1, 
-    name: "Industrial Revolution", 
-    description: "Machinery, blueprints, and the transformation of London during the 1800s.", 
-    image: "https://images.unsplash.com/photo-1555009312-3df64fb56cb2?w=800&q=80", 
-    lat: 51.5194, 
-    lng: -0.1270, 
-    country: "United Kingdom", 
-    category: "Science",
-    likes: 128,
-    creator: "Utshav"
+// --- Actual Museums Data (manager side / world museums) ---
+const dummyActualMuseums = [
+  {
+    id: 101,
+    name: 'Industrial Revolution Gallery',
+    description: 'Machinery, blueprints, and social history from 1800s London.',
+    image: 'https://images.unsplash.com/photo-1555009312-3df64fb56cb2?w=800&q=80',
+    lat: 51.5194,
+    lng: -0.127,
+    country: 'United Kingdom',
+    category: 'Science',
+    creator: 'British Museum Team',
   },
-  { 
-    id: 2, 
-    name: "Dynasties of the East", 
-    description: "Cultural artifacts, silk works, and pottery spanning the Ming and Qing dynasties.", 
-    image: "https://images.unsplash.com/photo-1596726224151-50802c659e51?w=800&q=80", 
-    lat: 39.9042, 
-    lng: 116.3912, 
-    country: "China", 
-    category: "Cultural",
-    likes: 890,
-    creator: "Ahnaf"
+  {
+    id: 102,
+    name: 'Dynasties of the East Museum',
+    description: 'Silk, ceramics, and imperial artifacts from the Ming and Qing eras.',
+    image: 'https://images.unsplash.com/photo-1596726224151-50802c659e51?w=800&q=80',
+    lat: 39.9042,
+    lng: 116.3912,
+    country: 'China',
+    category: 'Cultural',
+    creator: 'Beijing Heritage Board',
   },
-  { 
-    id: 3, 
-    name: "Modern Impressions", 
-    description: "A vibrant collection of late 19th and early 20th-century impressionist paintings.", 
-    image: "https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=800&q=80", 
-    lat: 48.8606, 
-    lng: 2.3376, 
-    country: "France", 
-    category: "Art",
-    likes: 275,
-    creator: "Utshav"
+  {
+    id: 103,
+    name: 'Modern Impressions Museum',
+    description: 'Late 19th and early 20th century impressionist movements.',
+    image: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=800&q=80',
+    lat: 48.8606,
+    lng: 2.3376,
+    country: 'France',
+    category: 'Art',
+    creator: 'Paris Arts Council',
+  },
+  {
+    id: 104,
+    name: 'Nile Civilizations Museum',
+    description: 'Ancient Egyptian life, rituals, and royal architecture.',
+    image: 'https://images.unsplash.com/photo-1675093162207-151b2d2136ea?w=800&q=80',
+    lat: 30.0444,
+    lng: 31.2357,
+    country: 'Egypt',
+    category: 'History',
+    creator: 'Cairo National Board',
+  },
+  {
+    id: 105,
+    name: 'Renaissance Heritage Museum',
+    description: 'Masterpieces and social history of renaissance Italy.',
+    image: 'https://images.unsplash.com/photo-1577083552431-6e5fd01988f1?w=800&q=80',
+    lat: 43.7696,
+    lng: 11.2558,
+    country: 'Italy',
+    category: 'Art',
+    creator: 'Florence Museum Authority',
+  },
+  {
+    id: 106,
+    name: 'Samurai Legacy Museum',
+    description: 'Armor, scrolls, and feudal era military culture.',
+    image: 'https://images.unsplash.com/photo-1521292270410-a8c4d716d518?w=800&q=80',
+    lat: 35.6762,
+    lng: 139.6503,
+    country: 'Japan',
+    category: 'History',
+    creator: 'Tokyo Historical Society',
+  },
+  {
+    id: 107,
+    name: 'Andean Cultural Museum',
+    description: 'Textiles, tools, and spiritual life of early Andean communities.',
+    image: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&q=80',
+    lat: -12.0464,
+    lng: -77.0428,
+    country: 'Peru',
+    category: 'Cultural',
+    creator: 'Lima Cultural Office',
+  },
+  {
+    id: 108,
+    name: 'Nordic Seafaring Museum',
+    description: 'Maritime exploration, navigation tools, and shipbuilding history.',
+    image: 'https://images.unsplash.com/photo-1491156855053-9cdff72c7f85?w=800&q=80',
+    lat: 59.3293,
+    lng: 18.0686,
+    country: 'Sweden',
+    category: 'Science',
+    creator: 'Stockholm Maritime Group',
   },
 ];
 
-// Filter options
-const museumCategories = ["All", "Art", "History", "Science", "Cultural"];
-const countries = ["All", "France", "United Kingdom", "Egypt", "Italy", "China"];
+// --- Community Museums Data (mini museums) ---
+const dummyCommunityMuseums = [
+  {
+    id: 1,
+    name: 'Industrial Revolution Mini Museum',
+    description: 'A curated corner on machine culture and city transition.',
+    image: 'https://images.unsplash.com/photo-1555009312-3df64fb56cb2?w=800&q=80',
+    country: 'United Kingdom',
+    category: 'Science',
+    likes: 128,
+    creator: 'Utshav',
+    createdAt: '2026-01-14',
+  },
+  {
+    id: 2,
+    name: 'Dynasties of the East Mini Museum',
+    description: 'Silk works and ceremonial objects from imperial courts.',
+    image: 'https://images.unsplash.com/photo-1596726224151-50802c659e51?w=800&q=80',
+    country: 'China',
+    category: 'Cultural',
+    likes: 890,
+    creator: 'Ahnaf',
+    createdAt: '2026-02-10',
+  },
+  {
+    id: 3,
+    name: 'Modern Impressions Mini Museum',
+    description: 'Brushwork, color palettes, and notes from modernist circles.',
+    image: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=800&q=80',
+    country: 'France',
+    category: 'Art',
+    likes: 275,
+    creator: 'Utshav',
+    createdAt: '2026-01-30',
+  },
+  {
+    id: 4,
+    name: 'City of Pharaohs Mini Museum',
+    description: 'A visual timeline of dynasties, tombs, and symbols.',
+    image: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&q=80',
+    country: 'Egypt',
+    category: 'History',
+    likes: 143,
+    creator: 'Maliha',
+    createdAt: '2026-03-01',
+  },
+  {
+    id: 5,
+    name: 'Roman Roads Mini Museum',
+    description: 'Engineering marvels and life around road networks.',
+    image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&q=80',
+    country: 'Italy',
+    category: 'History',
+    likes: 432,
+    creator: 'Nayeem',
+    createdAt: '2026-03-06',
+  },
+  {
+    id: 6,
+    name: 'Museum of Living Nature Mini Museum',
+    description: 'Natural artifacts and ecosystem stories from Africa.',
+    image: 'https://images.unsplash.com/photo-1577083552431-6e5fd01988f1?w=800&q=80',
+    country: 'Kenya',
+    category: 'Science',
+    likes: 205,
+    creator: 'Rafa',
+    createdAt: '2026-02-22',
+  },
+];
 
-// --- New MuseumCard Component ---
-const MuseumCard = ({ museum }) => {
+const museumCategories = ['All', 'Art', 'History', 'Science', 'Cultural'];
+const countries = ['All', 'France', 'United Kingdom', 'Egypt', 'Italy', 'China', 'Japan', 'Peru', 'Sweden', 'Kenya'];
+
+const MuseumCard = ({ museum, onHeart, showHeart = false, onEnter }) => {
   return (
     <div className="group h-full w-full bg-white rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 relative flex flex-col border border-dark-chocolate/10">
       <div className="relative h-48 overflow-hidden">
@@ -84,6 +205,18 @@ const MuseumCard = ({ museum }) => {
               {museum.category}
             </span>
         </div>
+        {showHeart && (
+          <button
+            onClick={() => onHeart && onHeart(museum.id)}
+            className="absolute bottom-4 right-4 z-20 bg-white/90 backdrop-blur px-2.5 py-1.5 rounded-full shadow-sm border border-dark-chocolate/10 hover:bg-white transition-colors"
+            aria-label="Like mini museum"
+          >
+            <span className="text-xs font-bold text-dark-chocolate flex items-center gap-1">
+              <Heart size={14} className="text-red-500 fill-red-500" />
+              {museum.likes}
+            </span>
+          </button>
+        )}
       </div>
 
       <div className="flex-1 p-6 relative bg-white flex flex-col">
@@ -103,10 +236,12 @@ const MuseumCard = ({ museum }) => {
             </div>
             <span className="text-xs font-bold uppercase tracking-wider">{museum.creator}</span>
           </div>
-          <span className="text-xs font-bold text-dark-chocolate flex items-center gap-1">
-            <Heart size={14} className="text-red-500 fill-red-500" />
-            {museum.likes}
-          </span>
+          <button
+            onClick={() => onEnter && onEnter(museum.id)}
+            className="btn btn-xs bg-dark-chocolate text-white hover:bg-accent-orange border-none"
+          >
+            Enter Museum
+          </button>
         </div>
       </div>
     </div>
@@ -191,46 +326,247 @@ const FilterPanel = ({
 );
 
 export default function Explore() {
-  const [museums, setMuseums] = useState(dummyMuseums);
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [mapMuseums, setMapMuseums] = useState([]);
+  const [archiveMuseums, setArchiveMuseums] = useState([]);
+  const [communityMuseums, setCommunityMuseums] = useState([]);
+  const [archiveSuggestions, setArchiveSuggestions] = useState([]);
+  const [communitySuggestions, setCommunitySuggestions] = useState([]);
+  const [totalArchivePages, setTotalArchivePages] = useState(1);
+  const [totalCommunityPages, setTotalCommunityPages] = useState(1);
+  const [archiveTotal, setArchiveTotal] = useState(0);
+  const [communityTotal, setCommunityTotal] = useState(0);
+
   const [searchQuery, setSearchQuery] = useState('');
+  const [archiveSearchQuery, setArchiveSearchQuery] = useState('');
+  const [communitySearchQuery, setCommunitySearchQuery] = useState('');
+
+  const [archiveSearchFocus, setArchiveSearchFocus] = useState(false);
+  const [communitySearchFocus, setCommunitySearchFocus] = useState(false);
+
+  const [archivePage, setArchivePage] = useState(1);
+  const [communityPage, setCommunityPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(true);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [mapCenter, setMapCenter] = useState([30, 20]);
   const [selectedMarker, setSelectedMarker] = useState(null);
+  const perPage = 6;
   
   // Filter states
   const [museumCategory, setMuseumCategory] = useState('All');
   const [country, setCountry] = useState('All');
+  const [communityCategory, setCommunityCategory] = useState('All');
+  const [communitySort, setCommunitySort] = useState('most_liked');
   
   const resultsRef = useRef(null);
-  const cardsRef = useRef([]);
+  const archiveCardsRef = useRef([]);
+  const communityCardsRef = useRef([]);
 
-  // Filter museums
-  const filteredMuseums = useMemo(() => {
-    let filtered = museums;
-    
-    if (searchQuery) {
-      filtered = filtered.filter(museum =>
-        museum.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        museum.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        museum.creator.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    if (museumCategory !== 'All') {
-      filtered = filtered.filter(museum => museum.category === museumCategory);
-    }
-    
-    if (country !== 'All') {
-      filtered = filtered.filter(museum => museum.country === country);
-    }
-    
-    return filtered;
-  }, [searchQuery, museums, museumCategory, country]);
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+
+        if (!token || role !== 'curator') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('role');
+          navigate('/login');
+          return;
+        }
+
+        let response = await fetch(`${API_URL}/explore/authorize`, {
+          method: 'GET',
+          headers: { token },
+        });
+
+        // Fallback to existing authorize endpoint if explore route is unavailable.
+        if (!response.ok && response.status === 404) {
+          response = await fetch(`${API_URL}/search/authorize`, {
+            method: 'GET',
+            headers: { token },
+          });
+        }
+
+        if (!response.ok && (response.status === 401 || response.status === 403)) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('role');
+          navigate('/login');
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(`Explore authorize failed with status ${response.status}`);
+        }
+
+        const parseRes = await response.json();
+        setUser(parseRes.user);
+      } catch (error) {
+        console.error(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [navigate]);
+
+  useEffect(() => {
+    const fetchMapMuseums = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const params = new URLSearchParams();
+        params.append('page', '1');
+        params.append('limit', '200');
+        if (museumCategory !== 'All') params.append('category', museumCategory);
+        if (country !== 'All') params.append('country', country);
+        if (searchQuery.trim()) params.append('search', searchQuery.trim());
+
+        const response = await fetch(`${API_URL}/explore/archives?${params.toString()}`, {
+          method: 'GET',
+          headers: { token },
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch map museums');
+
+        const data = await response.json();
+        setMapMuseums(data.museums || []);
+      } catch (error) {
+        console.error(error.message);
+        setMapMuseums(dummyActualMuseums);
+      }
+    };
+
+    fetchMapMuseums();
+  }, [museumCategory, country, searchQuery]);
+
+  useEffect(() => {
+    const fetchArchives = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const params = new URLSearchParams();
+        params.append('page', archivePage.toString());
+        params.append('limit', perPage.toString());
+        if (museumCategory !== 'All') params.append('category', museumCategory);
+        if (country !== 'All') params.append('country', country);
+        if (archiveSearchQuery.trim()) params.append('search', archiveSearchQuery.trim());
+
+        const response = await fetch(`${API_URL}/explore/archives?${params.toString()}`, {
+          method: 'GET',
+          headers: { token },
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch archives');
+
+        const data = await response.json();
+        setArchiveMuseums(data.museums || []);
+        setArchiveTotal(data.total || 0);
+        setTotalArchivePages(Math.max(1, data.total_pages || 1));
+      } catch (error) {
+        console.error(error.message);
+        const fallback = dummyActualMuseums.slice(0, perPage);
+        setArchiveMuseums(fallback);
+        setArchiveTotal(dummyActualMuseums.length);
+        setTotalArchivePages(Math.max(1, Math.ceil(dummyActualMuseums.length / perPage)));
+      }
+    };
+
+    fetchArchives();
+  }, [archivePage, archiveSearchQuery, museumCategory, country]);
+
+  useEffect(() => {
+    const fetchArchiveSuggestions = async () => {
+      if (!archiveSearchQuery.trim()) {
+        setArchiveSuggestions([]);
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/explore/archives/suggest?letters=${encodeURIComponent(archiveSearchQuery)}`, {
+          method: 'GET',
+          headers: { token },
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch archive suggestions');
+
+        const data = await response.json();
+        setArchiveSuggestions(data || []);
+      } catch (error) {
+        console.error(error.message);
+        setArchiveSuggestions([]);
+      }
+    };
+
+    fetchArchiveSuggestions();
+  }, [archiveSearchQuery]);
+
+  useEffect(() => {
+    const fetchCommunity = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const params = new URLSearchParams();
+        params.append('page', communityPage.toString());
+        params.append('limit', perPage.toString());
+        if (communitySearchQuery.trim()) params.append('search', communitySearchQuery.trim());
+        if (communityCategory !== 'All') params.append('category', communityCategory);
+        params.append('sort', communitySort);
+
+        const response = await fetch(`${API_URL}/explore/community?${params.toString()}`, {
+          method: 'GET',
+          headers: { token },
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch community museums');
+
+        const data = await response.json();
+        setCommunityMuseums(data.museums || []);
+        setCommunityTotal(data.total || 0);
+        setTotalCommunityPages(Math.max(1, data.total_pages || 1));
+      } catch (error) {
+        console.error(error.message);
+        const fallback = dummyCommunityMuseums.slice(0, perPage);
+        setCommunityMuseums(fallback);
+        setCommunityTotal(dummyCommunityMuseums.length);
+        setTotalCommunityPages(Math.max(1, Math.ceil(dummyCommunityMuseums.length / perPage)));
+      }
+    };
+
+    fetchCommunity();
+  }, [communityPage, communitySearchQuery, communityCategory, communitySort]);
+
+  useEffect(() => {
+    const fetchCommunitySuggestions = async () => {
+      if (!communitySearchQuery.trim()) {
+        setCommunitySuggestions([]);
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/explore/community/suggest?letters=${encodeURIComponent(communitySearchQuery)}`, {
+          method: 'GET',
+          headers: { token },
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch community suggestions');
+
+        const data = await response.json();
+        setCommunitySuggestions(data || []);
+      } catch (error) {
+        console.error(error.message);
+        setCommunitySuggestions([]);
+      }
+    };
+
+    fetchCommunitySuggestions();
+  }, [communitySearchQuery]);
 
   // GSAP Animations
   useEffect(() => {
-    if (filteredMuseums.length > 0 && cardsRef.current.length > 0) {
+    if (archiveMuseums.length > 0 && archiveCardsRef.current.length > 0) {
       ScrollTrigger.getAll().forEach(trigger => trigger.kill());
       gsap.fromTo(
         '.results-title',
@@ -240,7 +576,7 @@ export default function Explore() {
           scrollTrigger: { trigger: '.results-section', start: 'top 80%', toggleActions: 'play none none reverse' },
         }
       );
-      cardsRef.current.forEach((card, index) => {
+      archiveCardsRef.current.forEach((card, index) => {
         if (card) {
           gsap.fromTo(card,
             { opacity: 0, y: 80, scale: 0.9, rotateX: 15 },
@@ -251,12 +587,28 @@ export default function Explore() {
         }
       });
     }
-  }, [filteredMuseums]);
+  }, [archiveMuseums]);
+
+  useEffect(() => {
+    if (communityMuseums.length > 0 && communityCardsRef.current.length > 0) {
+      communityCardsRef.current.forEach((card, index) => {
+        if (card) {
+          gsap.fromTo(
+            card,
+            { opacity: 0, y: 60 },
+            { opacity: 1, y: 0, duration: 0.6, delay: index * 0.1, ease: 'power3.out' }
+          );
+        }
+      });
+    }
+  }, [communityMuseums]);
 
   const resetFilters = () => {
     setMuseumCategory('All');
     setCountry('All');
     setSearchQuery('');
+    setArchiveSearchQuery('');
+    setArchivePage(1);
   };
 
   const scrollToResults = () => {
@@ -268,6 +620,34 @@ export default function Explore() {
     setMapCenter([museum.lat, museum.lng]);
   };
 
+  const handleEnterMuseum = (museumId) => {
+    navigate(`/go-to-museum/${museumId}`);
+  };
+
+  const handleLikeCommunityMuseum = async (museumId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/explore/community/${museumId}/like`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          token,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to like museum');
+
+      const data = await response.json();
+      setCommunityMuseums(prev => prev.map(museum => (
+        museum.id === museumId
+          ? { ...museum, likes: data.likes }
+          : museum
+      )));
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
+
   const filterProps = {
     resetFilters,
     museumCategory, setMuseumCategory,
@@ -275,6 +655,16 @@ export default function Explore() {
     scrollToResults,
     setIsMobileFilterOpen
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-dark-chocolate">
+        <span className="loading loading-spinner loading-lg text-accent-orange"></span>
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-old-paper font-dmsans selection:bg-accent-orange/30 selection:text-dark-chocolate relative">
@@ -290,24 +680,27 @@ export default function Explore() {
               </svg>
             </div>
             <ul tabIndex="-1" className="menu menu-sm dropdown-content bg-dark-chocolate rounded-box z-100 mt-3 w-52 p-2 shadow-xl text-white border border-white/10">
-              <li><a className="hover:bg-white/10">Home</a></li>
-              <li><a className="hover:bg-white/10 text-accent-yellow">Explore</a></li>
-              <li><a className="hover:bg-white/10">Archive</a></li>
+              <li><Link to="/" className="hover:bg-white/10">Home</Link></li>
+              <li><Link to="/my-museums" className="hover:bg-white/10">My Museums</Link></li>
+              <li><Link to="/explore" className="hover:bg-white/10 text-accent-yellow">Explore</Link></li>
+              <li><Link to="/search" className="hover:bg-white/10">Search</Link></li>
             </ul>
           </div>
-          <a className="btn btn-ghost text-xl text-white ml-2 font-playfair">Kyubiko</a>
+          <Link to="/" className="btn btn-ghost text-xl text-white ml-2 font-playfair">Kyubiko</Link>
         </div>
         <div className="navbar-center hidden lg:flex">
           <ul className="menu menu-horizontal px-1 gap-2 text-white/80 font-medium">
-            <li><a className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">Home</a></li>
-            <li><a className="text-accent-yellow bg-white/10 rounded-lg">Explore</a></li>
-            <li><a className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">Archive</a></li>
+            <li><Link to="/" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">Home</Link></li>
+            <li><Link to="/my-museums" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">My Museums</Link></li>
+            <li><Link to="/explore" className="text-accent-yellow bg-white/10 rounded-lg">Explore</Link></li>
+            <li><Link to="/search" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">Search</Link></li>
           </ul>
         </div>
-        <div className="navbar-end">
-          <a className="btn btn-ghost border border-white/20 text-white mr-5 hover:bg-white/10 transition-colors">
-            Login / Sign up
-          </a>
+        <div className="navbar-end gap-3 pr-5">
+          <div className="hidden md:block bg-white/10 px-4 py-2 rounded-full">
+            <span className="text-sm font-medium text-white">{user.username}</span>
+          </div>
+          <UserAvatarMenu user={user} />
         </div>
       </div>
 
@@ -409,7 +802,7 @@ export default function Explore() {
           <ZoomControl position="topright" />
           <MapController center={selectedMarker ? [selectedMarker.lat, selectedMarker.lng] : null} />
           
-          {filteredMuseums.map(museum => (
+          {mapMuseums.map(museum => (
             <Marker 
               key={museum.id} 
               position={[museum.lat, museum.lng]}
@@ -430,6 +823,14 @@ export default function Explore() {
                   <span className="inline-block mt-2 text-xs bg-accent-yellow/30 text-dark-chocolate px-2 py-1 rounded-full">
                     {museum.category}
                   </span>
+                  <div className="mt-3">
+                    <button
+                      onClick={() => handleEnterMuseum(museum.id)}
+                      className="btn btn-xs bg-dark-chocolate text-white hover:bg-accent-orange border-none"
+                    >
+                      Enter Museum
+                    </button>
+                  </div>
                 </div>
               </Popup>
             </Marker>
@@ -452,31 +853,78 @@ export default function Explore() {
 
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <h3 className="text-xl font-bold text-dark-chocolate">
-              <span className="text-accent-orange">{filteredMuseums.length}</span> museums found
+              <span className="text-accent-orange">{archiveTotal}</span> museums found
             </h3>
-            <select className="select select-bordered bg-white border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none">
-              <option disabled defaultValue>Sort by</option>
-              <option>Most Liked</option>
-              <option>Newest Added</option>
-              <option>A-Z</option>
-            </select>
+            <div className="relative w-full sm:w-90">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-chocolate/40" size={18} />
+              <input
+                type="text"
+                value={archiveSearchQuery}
+                onChange={(e) => {
+                  setArchiveSearchQuery(e.target.value);
+                  setArchivePage(1);
+                }}
+                onFocus={() => setArchiveSearchFocus(true)}
+                onBlur={() => setTimeout(() => setArchiveSearchFocus(false), 120)}
+                placeholder="Search available museums..."
+                className="input input-bordered w-full bg-white border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none pl-10"
+              />
+
+              {archiveSearchFocus && archiveSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-dark-chocolate/10 rounded-xl shadow-xl z-20 overflow-hidden">
+                  {archiveSuggestions.map((museum) => (
+                    <button
+                      key={museum.id}
+                      onMouseDown={() => {
+                        setArchiveSearchQuery(museum.name);
+                        setArchiveSearchFocus(false);
+                      }}
+                      className="w-full text-left px-4 py-2.5 hover:bg-old-paper/60 text-sm text-dark-chocolate"
+                    >
+                      {museum.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
-            {filteredMuseums.map((museum, index) => (
+            {archiveMuseums.map((museum, index) => (
               <div 
                 key={museum.id}
-                ref={el => cardsRef.current[index] = el}
+                ref={el => archiveCardsRef.current[index] = el}
                 className="w-full transform-gpu"
                 style={{ perspective: '1000px' }}
               >
-                {/* Replaced generic Card with specific MuseumCard */}
-                <MuseumCard museum={museum} />
+                <MuseumCard museum={museum} onEnter={handleEnterMuseum} />
               </div>
             ))}
           </div>
 
-          {filteredMuseums.length === 0 && (
+          {totalArchivePages > 1 && (
+            <div className="mt-8 flex justify-center gap-3">
+              <button
+                onClick={() => setArchivePage(prev => Math.max(1, prev - 1))}
+                className="btn btn-sm bg-white border-dark-chocolate/20 text-dark-chocolate"
+                disabled={archivePage === 1}
+              >
+                Prev
+              </button>
+              <span className="text-sm font-bold text-dark-chocolate self-center">
+                Page {archivePage} / {totalArchivePages}
+              </span>
+              <button
+                onClick={() => setArchivePage(prev => Math.min(totalArchivePages, prev + 1))}
+                className="btn btn-sm bg-white border-dark-chocolate/20 text-dark-chocolate"
+                disabled={archivePage === totalArchivePages}
+              >
+                Next
+              </button>
+            </div>
+          )}
+
+          {archiveMuseums.length === 0 && (
             <div className="text-center py-16">
               <div className="w-24 h-24 mx-auto mb-6 bg-dark-chocolate/10 rounded-full flex items-center justify-center">
                 <Search size={40} className="text-dark-chocolate/30" />
@@ -491,6 +939,131 @@ export default function Explore() {
               </button>
             </div>
           )}
+
+          <div className="mt-16 md:mt-20 border-t border-dark-chocolate/10 pt-12">
+            <div className="mb-10 text-center">
+              <p className="text-xs uppercase tracking-widest text-accent-orange font-bold mb-2">Built by Curators</p>
+              <h2 className="font-playfair text-4xl md:text-5xl font-bold text-dark-chocolate mb-4">
+                Community Museums
+              </h2>
+              <p className="text-dark-chocolate/60 max-w-2xl mx-auto">
+                Discover mini museums created by users and support their work.
+              </p>
+            </div>
+
+            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-8">
+              <div className="relative w-full lg:w-100">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-chocolate/40" size={18} />
+                <input
+                  type="text"
+                  value={communitySearchQuery}
+                  onChange={(e) => {
+                    setCommunitySearchQuery(e.target.value);
+                    setCommunityPage(1);
+                  }}
+                  onFocus={() => setCommunitySearchFocus(true)}
+                  onBlur={() => setTimeout(() => setCommunitySearchFocus(false), 120)}
+                  placeholder="Search community museums..."
+                  className="input input-bordered w-full bg-white border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none pl-10"
+                />
+
+                {communitySearchFocus && communitySuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-dark-chocolate/10 rounded-xl shadow-xl z-20 overflow-hidden">
+                    {communitySuggestions.map((museum) => (
+                      <button
+                        key={museum.id}
+                        onMouseDown={() => {
+                          setCommunitySearchQuery(museum.name);
+                          setCommunitySearchFocus(false);
+                          setCommunityPage(1);
+                        }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-old-paper/60 text-sm text-dark-chocolate"
+                      >
+                        {museum.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                <select
+                  value={communityCategory}
+                  onChange={(e) => {
+                    setCommunityCategory(e.target.value);
+                    setCommunityPage(1);
+                  }}
+                  className="select select-bordered bg-white border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none"
+                >
+                  {museumCategories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={communitySort}
+                  onChange={(e) => {
+                    setCommunitySort(e.target.value);
+                    setCommunityPage(1);
+                  }}
+                  className="select select-bordered bg-white border-dark-chocolate/20 text-dark-chocolate focus:border-accent-orange focus:outline-none"
+                >
+                  <option value="most_liked">Most Liked</option>
+                  <option value="recent">Recently Created</option>
+                  <option value="a_z">A-Z</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
+              {communityMuseums.map((museum, index) => (
+                <div
+                  key={museum.id}
+                  ref={el => communityCardsRef.current[index] = el}
+                  className="w-full"
+                >
+                  <MuseumCard
+                    museum={museum}
+                    showHeart={true}
+                    onHeart={handleLikeCommunityMuseum}
+                    onEnter={handleEnterMuseum}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {totalCommunityPages > 1 && (
+              <div className="mt-8 flex justify-center gap-3">
+                <button
+                  onClick={() => setCommunityPage(prev => Math.max(1, prev - 1))}
+                  className="btn btn-sm bg-white border-dark-chocolate/20 text-dark-chocolate"
+                  disabled={communityPage === 1}
+                >
+                  Prev
+                </button>
+                <span className="text-sm font-bold text-dark-chocolate self-center">
+                  Page {communityPage} / {totalCommunityPages}
+                </span>
+                <button
+                  onClick={() => setCommunityPage(prev => Math.min(totalCommunityPages, prev + 1))}
+                  className="btn btn-sm bg-white border-dark-chocolate/20 text-dark-chocolate"
+                  disabled={communityPage === totalCommunityPages}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+
+            {communityTotal === 0 && (
+              <div className="text-center py-16">
+                <div className="w-24 h-24 mx-auto mb-6 bg-dark-chocolate/10 rounded-full flex items-center justify-center">
+                  <Search size={40} className="text-dark-chocolate/30" />
+                </div>
+                <h3 className="font-playfair text-2xl font-bold text-dark-chocolate mb-2">No community museums found</h3>
+                <p className="text-dark-chocolate/60">Try adjusting your community search or filters</p>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
