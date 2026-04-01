@@ -1,42 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { API_URL } from "../../config";
 
-const test_reviews = [
-  {
-    review_id: 1,
-    stars: 5,
-    review_body:
-      "An absolutely stunning piece of history. The craftsmanship is incredible.",
-    review_time: "2025-12-14T10:30:00Z",
-    user_id: 101,
-    user_name: "Aisha M.",
-    artifact_id: 1,
-    reply_id: null,
-  },
-  {
-    review_id: 2,
-    stars: 4,
-    review_body:
-      "Very well preserved, though I wish there was more context about its discovery.",
-    review_time: "2025-12-15T14:20:00Z",
-    user_id: 102,
-    user_name: "Rahul T.",
-    artifact_id: 1,
-    reply_id: null,
-  },
-  {
-    review_id: 3,
-    stars: 0,
-    review_body:
-      "We actually updated the plaque recently to include the excavation details!",
-    review_time: "2025-12-16T09:15:00Z",
-    user_id: 999,
-    user_name: "Curator Team",
-    artifact_id: 1,
-    reply_id: 2,
-  },
-];
-
 export default function Card({
   name,
   image,
@@ -62,13 +26,38 @@ export default function Card({
   const [replyTo, setReplyTo] = useState(null);
   const [reply, setReply] = useState("");
 
-  const mainReviews = test_reviews.filter((r) => r.reply_id === null);
-  const getReplies = (reviewId) =>
-    test_reviews.filter((r) => r.reply_id === reviewId);
+  const [reviews, setReviews] = useState([]);
+
+  const get_reviews = async () => {
+    try {
+      const response = await fetch(
+        `${API_URL}/card/reviews?artifact_id=${artifactId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            token: localStorage.getItem("token"),
+          },
+        },
+      );
+
+      const res = await response.json();
+      if (response.ok) {
+        setReviews(res);
+      }
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
 
   useEffect(() => {
     setIsFav(color);
   }, [color]);
+
+  useEffect(() => {
+    if (isModalOpen) {
+      get_reviews();
+    }
+  }, [isModalOpen, artifactId]);
 
   const handleAddView = async () => {
     try {
@@ -90,22 +79,59 @@ export default function Card({
     }
   };
 
-  const handleReviewSubmit = (e) => {
+  const handleReviewSubmit = async (e) => {
     e.preventDefault();
-    console.log("Submit Review:", {
-      newReviewRating: newRating,
-      newReviewText: newReview,
-      artifactId,
-    });
-    setNewReview("");
-    setNewRating(0);
+    try {
+      const response = await fetch(`${API_URL}/card/add_review`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          token: localStorage.getItem("token"),
+        },
+        body: JSON.stringify({
+          artifact_id: artifactId,
+          stars: newRating,
+          review_body: newReview,
+        }),
+      });
+
+      if (response.ok) {
+        // reset form and refresh reviews
+        setNewReview("");
+        setNewRating(0);
+        get_reviews();
+      }
+    } catch (error) {
+      console.error(error.message);
+    }
   };
 
-  const handleReplySubmit = (e, parentId) => {
+  const handleReplySubmit = async (e, parent_id) => {
     e.preventDefault();
-    console.log("Submit Reply:", { parentId, replyText: reply, artifactId });
-    setReplyTo(null);
-    setReply("");
+
+    try {
+      const response = await fetch(`${API_URL}/card/add_review`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          token: localStorage.getItem("token"),
+        },
+        body: JSON.stringify({
+          artifact_id: artifactId,
+          stars: 5,
+          review_body: reply,
+          reply_id: parent_id,
+        }),
+      });
+
+      if (response.ok) {
+        setReply("");
+        setReplyTo(null);
+        get_reviews();
+      }
+    } catch (error) {
+      console.error(error.message);
+    }
   };
 
   const handleAddFav = async (artifactId, wishlist, setWishlist, setPopMsg) => {
@@ -387,13 +413,21 @@ export default function Card({
 
               {/* Reviews List */}
               <div className="space-y-8 mt-8">
-                {mainReviews.map((review) => (
+                {reviews.map((review) => (
                   <div key={review.review_id} className="flex gap-4">
                     <div className="avatar placeholder self-start">
                       <div className="bg-stone-200 text-stone-700 rounded-full w-12 h-12">
-                        <span className="text-lg font-bold">
-                          {review.user_name?.charAt(0).toUpperCase()}
-                        </span>
+                        {review.avatar_url ? (
+                          <img
+                            src={review.avatar_url}
+                            alt={review.username}
+                            className="rounded-full w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-lg font-bold">
+                            {review.username?.charAt(0).toUpperCase()}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -401,7 +435,7 @@ export default function Card({
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-0">
                         <div>
                           <span className="font-bold text-stone-900 mr-2">
-                            {review.user_name}
+                            {review.username}
                           </span>
                           <span className="text-xs text-stone-400">
                             {new Date(review.review_time).toLocaleDateString()}
@@ -455,7 +489,7 @@ export default function Card({
                             type="text"
                             value={reply}
                             onChange={(e) => setReply(e.target.value)}
-                            placeholder={`Replying to ${review.user_name}...`}
+                            placeholder={`Replying to ${review.username}...`}
                             className="input input-sm input-bordered w-full bg-white border-stone-300 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                             required
                           />
@@ -469,21 +503,29 @@ export default function Card({
                       )}
 
                       {/* Replies */}
-                      {getReplies(review.review_id).length > 0 && (
+                      {review.replies && review.replies.length > 0 && (
                         <div className="mt-5 space-y-4">
-                          {getReplies(review.review_id).map((reply) => (
+                          {review.replies.map((reply) => (
                             <div key={reply.review_id} className="flex gap-3">
                               <div className="avatar placeholder self-start">
-                                <div className="bg-stone-300 text-stone-700 rounded-full w-8 h-8">
-                                  <span className="text-xs font-bold">
-                                    {reply.user_name?.charAt(0).toUpperCase()}
-                                  </span>
+                                <div className="bg-stone-200 text-stone-700 rounded-full w-12 h-12">
+                                  {review.avatar_url ? (
+                                    <img
+                                      src={review.avatar_url}
+                                      alt={review.username}
+                                      className="rounded-full w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <span className="text-lg font-bold">
+                                      {review.username?.charAt(0).toUpperCase()}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                               <div className="flex-1 bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
                                 <div className="mb-1 flex items-baseline">
                                   <span className="font-bold text-stone-900 text-sm mr-2">
-                                    {reply.user_name}
+                                    {reply.username}
                                   </span>
                                   <span className="text-xs text-stone-400">
                                     {new Date(
@@ -495,6 +537,16 @@ export default function Card({
                                   {reply.review_body}
                                 </p>
                               </div>
+
+                              <button
+                                onClick={() => {
+                                  setReplyTo(review.review_id);
+                                  setReply(``);
+                                }}
+                                className="text-xs font-bold text-stone-500 hover:text-amber-600"
+                              >
+                                Reply
+                              </button>
                             </div>
                           ))}
                         </div>
@@ -503,7 +555,7 @@ export default function Card({
                   </div>
                 ))}
 
-                {mainReviews.length === 0 && (
+                {reviews.length === 0 && (
                   <p className="text-stone-500 italic text-center py-8">
                     No reviews yet. Be the first to share your thoughts!
                   </p>

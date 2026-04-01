@@ -385,3 +385,33 @@ $$ LANGUAGE plpgsql;
 // -- like count - procedure
 // -- views count + add to artifacts_views trigger
 
+
+// -- Complex Queries
+
+-- fetch data for mini museums with sections and artifacts
+SELECT 
+            'section-' || s.position AS id, 
+            s.name,
+            COALESCE(
+                json_agg(
+                    json_build_object(
+                        'artifact_id', a.artifact_id,
+                        'name', a.artifact_name, 
+                        'image', a.picture_url,  
+                        'description', a.description,
+                        'creator', a.creator,
+                        'time_period', a.time_period,
+                        'acquisition_date', a.acquisition_date,
+                        'origin', a.origin,
+                        'category_name', cat.category_name
+                    ) 
+                ) FILTER (WHERE a.artifact_id IS NOT NULL),
+                '[]'::json
+            ) AS items
+        FROM sections s
+        LEFT JOIN artifacts a ON s.artifact_id = a.artifact_id
+        LEFT JOIN categories cat ON a.category_id = cat.category_id
+        WHERE s.mini_museum_id = $1
+        GROUP BY s.name, s.position, s.mini_museum_id
+        ORDER BY s.position ASC;
+
