@@ -387,6 +387,12 @@ export default function GoToMuseum() {
                 Take Trivia
               </Link>
               <Link
+                to={`/tour/${id}`}
+                className="btn bg-white text-dark-chocolate border border-dark-chocolate/20 hover:bg-old-paper"
+              >
+                Book a Tour
+              </Link>
+              <Link
                 to={`/leaderboard/${id}`}
                 className="btn bg-dark-chocolate text-white hover:bg-accent-orange border-none"
               >

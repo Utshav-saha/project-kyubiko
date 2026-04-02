@@ -16,6 +16,26 @@ import {
 import { API_URL } from "../config";
 import UserAvatarMenu from "../components/common/UserAvatarMenu";
 
+const toTwelve = (time24) => {
+  const [hRaw, mRaw] = String(time24 || "00:00:00").split(":");
+  let h = Number(hRaw || 0);
+  const m = Number(mRaw || 0);
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")} ${ampm}`;
+};
+
+const formatDate = (isoDate) => {
+  const d = new Date(isoDate);
+  if (Number.isNaN(d.getTime())) return isoDate;
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
 const dummyAchievements = [
   {
     id: 1,
@@ -52,6 +72,7 @@ export default function Profile() {
 
   const [favorites, setFavorites] = useState([]);
   const [museums, setMuseums] = useState([]);
+  const [tourTickets, setTourTickets] = useState([]);
   const [sectionsByMuseum, setSectionsByMuseum] = useState({});
 
   const [draggingId, setDraggingId] = useState(null);
@@ -100,7 +121,7 @@ export default function Profile() {
       const authData = await authRes.json();
       setUser(authData.user);
 
-      const [wishlistRes, museumsRes] = await Promise.all([
+      const [wishlistRes, museumsRes, ticketsRes] = await Promise.all([
         fetch(`${API_URL}/view/wishlist`, {
           method: "GET",
           headers: { token },
@@ -109,10 +130,21 @@ export default function Profile() {
           method: "GET",
           headers: { token },
         }),
+        fetch(`${API_URL}/tour/my-bookings`, {
+          method: "GET",
+          headers: { token },
+        }),
       ]);
 
       const wishlistData = await wishlistRes.json();
       const museumsData = await museumsRes.json();
+      const ticketsData = ticketsRes.ok ? await ticketsRes.json() : [];
+
+      if (Array.isArray(ticketsData)) {
+        setTourTickets(ticketsData);
+      } else {
+        setTourTickets([]);
+      }
 
       const favRows = Array.isArray(wishlistData) ? wishlistData : [];
       setFavorites(
@@ -305,7 +337,50 @@ export default function Profile() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-old-paper font-dmsans selection:bg-accent-orange/30 selection:text-dark-chocolate relative">
+    <>
+      <style>{`
+        .hover-3d {
+          position: relative;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-rows: repeat(3, minmax(0, 1fr));
+          width: 24rem;
+          max-width: 100%;
+          aspect-ratio: 1.6 / 1;
+        }
+
+        .hover-3d > .card {
+          grid-column: 1 / 4;
+          grid-row: 1 / 4;
+          transition: transform 220ms ease, box-shadow 220ms ease;
+          transform-style: preserve-3d;
+          will-change: transform;
+        }
+
+        .hover-3d > div:not(.card) {
+          z-index: 2;
+        }
+
+        .hover-3d > div:nth-child(2) { grid-column: 1; grid-row: 1; }
+        .hover-3d > div:nth-child(3) { grid-column: 2; grid-row: 1; }
+        .hover-3d > div:nth-child(4) { grid-column: 3; grid-row: 1; }
+        .hover-3d > div:nth-child(5) { grid-column: 1; grid-row: 2; }
+        .hover-3d > div:nth-child(6) { grid-column: 3; grid-row: 2; }
+        .hover-3d > div:nth-child(7) { grid-column: 1; grid-row: 3; }
+        .hover-3d > div:nth-child(8) { grid-column: 2; grid-row: 3; }
+        .hover-3d > div:nth-child(9) { grid-column: 3; grid-row: 3; }
+
+        .hover-3d > div:nth-child(2):hover ~ .card { transform: perspective(850px) rotateX(8deg) rotateY(-10deg) translateY(-4px); }
+        .hover-3d > div:nth-child(3):hover ~ .card { transform: perspective(850px) rotateX(8deg) rotateY(0deg) translateY(-4px); }
+        .hover-3d > div:nth-child(4):hover ~ .card { transform: perspective(850px) rotateX(8deg) rotateY(10deg) translateY(-4px); }
+        .hover-3d > div:nth-child(5):hover ~ .card { transform: perspective(850px) rotateX(0deg) rotateY(-10deg) translateY(-4px); }
+        .hover-3d > div:nth-child(6):hover ~ .card { transform: perspective(850px) rotateX(0deg) rotateY(10deg) translateY(-4px); }
+        .hover-3d > div:nth-child(7):hover ~ .card { transform: perspective(850px) rotateX(-8deg) rotateY(-10deg) translateY(-4px); }
+        .hover-3d > div:nth-child(8):hover ~ .card { transform: perspective(850px) rotateX(-8deg) rotateY(0deg) translateY(-4px); }
+        .hover-3d > div:nth-child(9):hover ~ .card { transform: perspective(850px) rotateX(-8deg) rotateY(10deg) translateY(-4px); }
+      `}</style>
+
+      <div className="min-h-screen bg-old-paper font-dmsans selection:bg-accent-orange/30 selection:text-dark-chocolate relative">
       <div className="fixed inset-0 bg-noise opacity-40 pointer-events-none mix-blend-multiply z-0"></div>
 
       <div className="navbar shadow-sm z-20 bg-dark-chocolate relative">
@@ -447,6 +522,58 @@ export default function Profile() {
           </div>
         </section>
 
+        <section>
+          <div className="mb-6">
+            <p className="text-xs uppercase tracking-widest text-accent-orange font-bold mb-2">Your Bookings</p>
+            <h2 className="font-playfair text-4xl md:text-5xl font-bold text-dark-chocolate">Tour Tickets</h2>
+          </div>
+
+          {tourTickets.length === 0 ? (
+            <div className="bg-white rounded-xl border border-dark-chocolate/10 p-10 text-center text-dark-chocolate/60">
+              No booked tour tickets yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
+              {tourTickets.map((ticket) => (
+                <Link
+                  key={ticket.booking_id}
+                  to={`/tour/${ticket.museum?.id}/payment-success/${ticket.booking_id}`}
+                  className="hover-3d my-2 mx-2 cursor-pointer"
+                >
+                  <div className="card w-96 bg-dark-chocolate text-white shadow-xl bg-[radial-gradient(circle_at_bottom_left,#ffffff04_35%,transparent_36%),radial-gradient(circle_at_top_right,#ffffff04_35%,transparent_36%)] [background-size:4.95em_4.95em] border border-white/10">
+                    <div className="card-body">
+                      <div className="flex justify-between mb-10">
+                        <div className="font-bold uppercase tracking-wide line-clamp-1">{ticket.museum?.name || "Museum"}</div>
+                        <div className="text-5xl opacity-10">❁</div>
+                      </div>
+                      <div className="text-lg mb-4 opacity-50 font-mono break-all">{ticket.ticket_code}</div>
+                      <div className="flex justify-between gap-3">
+                        <div>
+                          <div className="text-xs opacity-40 uppercase tracking-wide">Owner</div>
+                          <div className="font-semibold line-clamp-1">{user?.username || "Curator"}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs opacity-40 uppercase tracking-wide">Tour Date</div>
+                          <div className="font-semibold">{formatDate(ticket.tour_date)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+
         <section className="pb-12">
           <div className="mb-6">
             <p className="text-xs uppercase tracking-widest text-accent-orange font-bold mb-2">Your Mini Museums</p>
@@ -547,6 +674,7 @@ export default function Profile() {
           {popMsg}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

@@ -138,6 +138,7 @@ export default function CreateTour() {
   const [endAmPm, setEndAmPm] = useState("PM");
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
   const [revenueBySlot, setRevenueBySlot] = useState({});
+  const [totalRevenue, setTotalRevenue] = useState("");
 
   const loadOverview = async () => {
     const token = localStorage.getItem("token");
@@ -370,6 +371,25 @@ export default function CreateTour() {
     }
   };
 
+  const showTotalRevenue = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/tour/revenue-total`, {
+        headers: { token },
+      });
+      const data = await response.json();
+      if (!response.ok) return;
+
+      setTotalRevenue(`$${Number(data.total_revenue || 0).toFixed(2)}`);
+
+      setTimeout(() => {
+        setTotalRevenue("");
+      }, 10000);
+    } catch (error) {
+      // keep silent in UI
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-dark-chocolate">
@@ -448,7 +468,7 @@ export default function CreateTour() {
               )}
             </div>
 
-            <div className="flex items-center pt-1">
+            <div className="flex flex-wrap items-center gap-3 pt-1">
               <button
                 onClick={openCreateForm}
                 className="btn bg-dark-chocolate text-white hover:bg-accent-orange border-none"
@@ -456,6 +476,17 @@ export default function CreateTour() {
                 <Plus size={18} />
                 Create Tour
               </button>
+
+              <button
+                onClick={showTotalRevenue}
+                className="btn bg-white text-dark-chocolate border border-dark-chocolate/20 hover:bg-old-paper"
+              >
+                Show Total Revenue
+              </button>
+
+              {totalRevenue && (
+                <span className="text-sm font-bold text-emerald-700">Total Revenue: {totalRevenue}</span>
+              )}
             </div>
           </div>
 

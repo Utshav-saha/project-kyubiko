@@ -5,8 +5,8 @@
 -- Takes user_id and tour_id, prevents duplicate booking by the same user on same tour,
 -- finds an available time slot, creates unique ticket code, inserts booking,
 -- updates total_bookings, and returns the ticket code.
-CREATE OR REPLACE FUNCTION process_tour_booking(p_user_id INT, p_tour_id INT)
-RETURNS TEXT
+CREATE OR REPLACE FUNCTION process_tour_booking(p_user_id INT, p_tour_id INT, out msg TEXT)
+
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -65,4 +65,25 @@ AS $$
   JOIN tours t ON t.tour_id = ts.tour_id
   WHERE ts.time_slot_id = p_time_slot_id
   LIMIT 1;
+$$;
+
+-- 3) Total revenue calculator by museum
+-- Sums revenue from all time slots belonging to all tours in the museum.
+CREATE OR REPLACE FUNCTION calculate_museum_total_revenue(p_museum_id INT)
+RETURNS DECIMAL(12,2)
+LANGUAGE sql
+AS $$
+  SELECT COALESCE(SUM(slot_revenue), 0)::DECIMAL(12,2)
+  FROM (
+    SELECT
+      GREATEST(COALESCE(ts.total_bookings, 0), COALESCE(bk.bookings_count, 0)) * COALESCE(t.price, 0) AS slot_revenue
+    FROM tours t
+    JOIN time_slots ts ON ts.tour_id = t.tour_id
+    LEFT JOIN (
+      SELECT time_slot_id, COUNT(*)::INT AS bookings_count
+      FROM bookings
+      GROUP BY time_slot_id
+    ) bk ON bk.time_slot_id = ts.time_slot_id
+    WHERE t.museum_id = p_museum_id
+  ) revenue_rows;
 $$;

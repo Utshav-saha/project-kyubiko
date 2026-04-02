@@ -12,6 +12,9 @@ import Leaderboard from "./pages/Leaderboard";
 import Trivia from "./pages/Trivia";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import CreateTour from "./pages/CreateTour";
+import Tour from "./pages/Tour";
+import Payment from "./pages/Payment";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import Question from "./pages/Question";
 import Result from "./pages/Result";
 import ManagerQuiz from "./pages/ManagerQuiz";
@@ -35,6 +38,9 @@ function App() {
             <Route path="/go-to-museum/:id" element={<GoToMuseum />} />
             <Route path="/manager-dashboard" element={<ManagerDashboard />} />
             <Route path="/tours" element={<CreateTour />} />
+            <Route path="/tour/:id" element={<Tour />} />
+            <Route path="/tour/:museumId/payment/:timeSlotId" element={<Payment />} />
+            <Route path="/tour/:museumId/payment-success/:bookingId" element={<PaymentSuccess />} />
             <Route path="/trivia/:id" element={<Trivia />} />
             <Route path="/trivia/:id/question" element={<Question />} />
             <Route path="/trivia/:id/result" element={<Result />} />
