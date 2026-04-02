@@ -19,7 +19,6 @@ app.use("/museum", require("./routes/museum"));
 app.use("/leaderboard", require("./routes/leaderboard"));
 app.use("/manager", require("./routes/manager"));
 app.use("/quiz", require("./routes/quiz"));
-app.use("/tour", require("./routes/tour"));
 
 
 

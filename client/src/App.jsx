@@ -14,6 +14,7 @@ import ManagerDashboard from "./pages/ManagerDashboard";
 import CreateTour from "./pages/CreateTour";
 import Question from "./pages/Question";
 import Result from "./pages/Result";
+import ManagerQuiz from "./pages/ManagerQuiz";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -39,6 +40,7 @@ function App() {
             <Route path="/trivia/:id/result" element={<Result />} />
             <Route path="/leaderboard/:id" element={<Leaderboard />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/manager-quiz/:id" element={<ManagerQuiz />} />
         </Routes>
       </div>
     </>

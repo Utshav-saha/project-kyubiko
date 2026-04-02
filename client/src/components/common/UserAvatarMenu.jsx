@@ -25,7 +25,7 @@ export default function UserAvatarMenu({ user, logoutOnly = false }) {
 
       <div
         tabIndex={0}
-        className="dropdown-content mt-3 w-72 rounded-xl bg-white shadow-xl border border-dark-chocolate/10 p-4 z-[1000]"
+        className="dropdown-content mt-3 w-72 rounded-xl bg-white shadow-xl border border-dark-chocolate/10 p-4 z-1000"
       >
         <div className="flex items-center gap-3 pb-3 border-b border-dark-chocolate/10">
           <div className="w-11 h-11 rounded-full bg-dark-chocolate/10 flex items-center justify-center">
