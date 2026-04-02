@@ -95,6 +95,8 @@ export default function Login() {
       if (parseRes.token) {
         localStorage.setItem("token", parseRes.token);
         localStorage.setItem("role", parseRes.role);
+        localStorage.setItem("username", parseRes.username || "");
+        localStorage.setItem("avatar_url", parseRes.avatar_url || "");
 
         console.log("Login success");
         if (parseRes.role === "curator") {

@@ -1,9 +1,18 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { User } from "lucide-react";
 
-export default function UserAvatarMenu({ user }) {
+export default function UserAvatarMenu({ user, logoutOnly = false }) {
+  const navigate = useNavigate();
   const role = localStorage.getItem("role") || "curator";
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("username");
+    localStorage.removeItem("avatar_url");
+    navigate("/login");
+  };
 
   return (
     <div className="dropdown dropdown-end">
@@ -28,18 +37,29 @@ export default function UserAvatarMenu({ user }) {
         </div>
 
         <div className="pt-3 space-y-2">
-          <Link
-            to="/profile"
-            className="btn btn-sm w-full bg-dark-chocolate text-white hover:bg-accent-orange border-none"
+          {!logoutOnly && (
+            <>
+              <Link
+                to="/profile"
+                className="btn btn-sm w-full bg-dark-chocolate text-white hover:bg-accent-orange border-none"
+              >
+                Go to Profile
+              </Link>
+              <Link
+                to="/my-museums"
+                className="btn btn-sm w-full bg-white text-dark-chocolate border border-dark-chocolate/20 hover:bg-old-paper"
+              >
+                My Museums
+              </Link>
+            </>
+          )}
+
+          <button
+            onClick={handleLogout}
+            className="btn btn-sm w-full bg-red-500 text-white hover:bg-red-600 border-none"
           >
-            Go to Profile
-          </Link>
-          <Link
-            to="/my-museums"
-            className="btn btn-sm w-full bg-white text-dark-chocolate border border-dark-chocolate/20 hover:bg-old-paper"
-          >
-            My Museums
-          </Link>
+            Logout
+          </button>
         </div>
       </div>
     </div>
