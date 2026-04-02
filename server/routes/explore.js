@@ -2,6 +2,11 @@ const router = require("express").Router();
 const pool = require("../db");
 const authorization = require("../middleware/authorization");
 
+const isViewerRole = (req) => {
+	if (!req.user?.role) return true;
+	return req.user.role === "curator" || req.user.role === "manager";
+};
+
 const getCommunityCategory = (museum) => {
 	const text = `${museum.name || ""} ${museum.description || ""}`.toLowerCase();
 
@@ -46,6 +51,9 @@ const getCommunityCategory = (museum) => {
 // get infos
 router.get("/authorize", authorization, async (req, res) => {
 	try {
+		if (!isViewerRole(req)) {
+			return res.status(403).json("Only Curator or Manager Authorized");
+		}
 		
 		const user_id = req.user?.id || req.user;
 
@@ -66,8 +74,8 @@ router.get("/authorize", authorization, async (req, res) => {
 // archive suggestions
 router.get("/archives/suggest", authorization, async (req, res) => {
 	try {
-		if (req.user?.role && req.user.role !== "curator") {
-			return res.status(403).json("Only Curator Authorized");
+		if (!isViewerRole(req)) {
+			return res.status(403).json("Only Curator or Manager Authorized");
 		}
 
 		const letters = req.query.letters || "";
@@ -89,9 +97,10 @@ router.get("/archives/suggest", authorization, async (req, res) => {
 // archives list (actual museums)
 router.get("/archives", authorization, async (req, res) => {
 	try {
-		if (req.user?.role && req.user.role !== "curator") {
-			return res.status(403).json("Only Curator Authorized");
+		if (!isViewerRole(req)) {
+			return res.status(403).json("Only Curator or Manager Authorized");
 		}
+		
 
 		const values = [];
 		let filters = " WHERE 1=1";
@@ -171,8 +180,8 @@ router.get("/archives", authorization, async (req, res) => {
 // community suggestions
 router.get("/community/suggest", authorization, async (req, res) => {
 	try {
-		if (req.user?.role && req.user.role !== "curator") {
-			return res.status(403).json("Only Curator Authorized");
+		if (!isViewerRole(req)) {
+			return res.status(403).json("Only Curator or Manager Authorized");
 		}
 
 		const letters = req.query.letters || "";
@@ -194,8 +203,8 @@ router.get("/community/suggest", authorization, async (req, res) => {
 // community list (mini museums)
 router.get("/community", authorization, async (req, res) => {
 	try {
-		if (req.user?.role && req.user.role !== "curator") {
-			return res.status(403).json("Only Curator Authorized");
+		if (!isViewerRole(req)) {
+			return res.status(403).json("Only Curator or Manager Authorized");
 		}
 
 		const values = [];

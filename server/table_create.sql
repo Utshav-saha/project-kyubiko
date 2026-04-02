@@ -479,9 +479,6 @@ $$ LANGUAGE plpgsql;
 
 
 
-
-
-
 // -- Complex Queries
 
 -- fetch data for mini museums with sections and artifacts

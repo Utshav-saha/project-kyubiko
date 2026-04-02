@@ -2,11 +2,16 @@ const router = require("express").Router();
 const pool = require("../db");
 const authorization = require("../middleware/authorization");
 
+const isViewerRole = (req) => {
+	if (!req.user?.role) return true;
+	return req.user.role === "curator" || req.user.role === "manager";
+};
+
 // get user info
 router.get("/authorize", authorization, async (req, res) => {
 	try {
-		if (req.user?.role && req.user.role !== "curator") {
-			return res.status(403).json("Only Curator Authorized");
+		if (!isViewerRole(req)) {
+			return res.status(403).json("Only Curator or Manager Authorized");
 		}
 
 		const user_id = req.user?.id || req.user;
@@ -98,8 +103,8 @@ router.post("/favorite", authorization, async (req, res) => {
 // museum details by id
 router.get("/info/:id", authorization, async (req, res) => {
 	try {
-		if (req.user?.role && req.user.role !== "curator") {
-			return res.status(403).json("Only Curator Authorized");
+		if (!isViewerRole(req)) {
+			return res.status(403).json("Only Curator or Manager Authorized");
 		}
 
 		const museumId = req.params.id;
@@ -134,8 +139,8 @@ router.get("/info/:id", authorization, async (req, res) => {
 // museum artifact suggestions
 router.get("/:id/suggest", authorization, async (req, res) => {
 	try {
-		if (req.user?.role && req.user.role !== "curator") {
-			return res.status(403).json("Only Curator Authorized");
+		if (!isViewerRole(req)) {
+			return res.status(403).json("Only Curator or Manager Authorized");
 		}
 
 		const museumId = req.params.id;
@@ -159,8 +164,8 @@ router.get("/:id/suggest", authorization, async (req, res) => {
 // search artifacts within one museum
 router.get("/:id/artifacts", authorization, async (req, res) => {
 	try {
-		if (req.user?.role && req.user.role !== "curator") {
-			return res.status(403).json("Only Curator Authorized");
+		if (!isViewerRole(req)) {
+			return res.status(403).json("Only Curator or Manager Authorized");
 		}
 
 		const museumId = req.params.id;
