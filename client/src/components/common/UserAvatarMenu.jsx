@@ -11,6 +11,7 @@ export default function UserAvatarMenu({ user, logoutOnly = false }) {
     localStorage.removeItem("role");
     localStorage.removeItem("username");
     localStorage.removeItem("avatar_url");
+    localStorage.removeItem("user");
     navigate("/login");
   };
 

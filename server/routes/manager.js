@@ -1,19 +1,50 @@
 const router = require("express").Router();
 const pool = require("../db");
 const authorization = require("../middleware/authorization");
+const cloudinary = require("cloudinary").v2;
 
-const getManagerMuseum = async (userId) => {
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Delete from cloudinary
+const delete_clound = async (url) => {
+	if (!url || !url.includes("cloudinary.com")) return;
+	try {
+		// Example URL: https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg
+		// We need "sample" ( publicId) to delete it
+		const parts = url.split("/");
+		const last_part = parts[parts.length - 1];
+		const publicId = last_part.split(".")[0];
+		
+		await cloudinary.uploader.destroy(publicId);
+	} catch (err) {
+		console.error("Cloudinary delete error:", err);
+	}
+};
+
+
+const get_museum = async (user_id) => {
 	const museum = await pool.query(
 		`SELECT museum_id
 		 FROM museums
 		 WHERE manager_id = $1
 		 ORDER BY museum_id ASC
 		 LIMIT 1`,
-		[userId]
+		[user_id]
 	);
 
 	return museum.rows[0] || null;
 };
+
+const parseCoordinate = (value) => {
+	if (value === undefined || value === null || value === "") return null;
+	const parsed = Number(value);
+	return Number.isNaN(parsed) ? null : parsed;
+};
+
 
 router.get("/authorize", authorization, async (req, res) => {
 	try {
@@ -43,7 +74,8 @@ router.get("/museum", authorization, async (req, res) => {
 		}
 
 		const user_id = req.user?.id || req.user;
-		const managerMuseum = await getManagerMuseum(user_id);
+		const managerMuseum = await get_museum
+	(user_id);
 
 		if (!managerMuseum) {
 			return res.status(404).json({ error: "No museum assigned to this manager" });
@@ -52,9 +84,14 @@ router.get("/museum", authorization, async (req, res) => {
 		const museum = await pool.query(
 			`SELECT
 				m.museum_id AS id,
+				m.museum_name AS museum_name,
 				m.museum_name AS name,
 				COALESCE(m.description, '') AS description,
 				COALESCE(m.picture_url, '') AS image,
+				COALESCE(m.open_days, '') AS open_days,
+				COALESCE(l.city, '') AS city,
+				l.latitude,
+				l.longitude,
 				COALESCE(c.name, 'Unknown') AS country,
 				m.category,
 				COALESCE(u.username, 'Unknown') AS creator
@@ -73,6 +110,34 @@ router.get("/museum", authorization, async (req, res) => {
 		res.json(museum.rows[0]);
 	} catch (error) {
 		console.error(error.message);
+		res.status(500).json({ error: error.message });
+	}
+});
+
+router.get("/locations-data", authorization, async (req, res) => {
+	try {
+		if (req.user?.role && req.user.role !== "manager") {
+			return res.status(403).json("Only Manager Authorized");
+		}
+
+		const [citiesRes, countriesRes] = await Promise.all([
+			pool.query(
+				`SELECT city
+				 FROM locations
+				 ORDER BY city ASC`
+			),
+			pool.query(
+				`SELECT name AS country
+				 FROM country
+				 ORDER BY name ASC`
+			),
+		]);
+
+		res.json({
+			cities: citiesRes.rows.map((row) => row.city),
+			countries: countriesRes.rows.map((row) => row.country),
+		});
+	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
 });
@@ -102,7 +167,8 @@ router.get("/artifacts", authorization, async (req, res) => {
 		}
 
 		const user_id = req.user?.id || req.user;
-		const managerMuseum = await getManagerMuseum(user_id);
+		const managerMuseum = await get_museum
+	(user_id);
 		if (!managerMuseum) {
 			return res.status(404).json({ error: "No museum assigned to this manager" });
 		}
@@ -166,7 +232,8 @@ router.put("/artifact/:id", authorization, async (req, res) => {
 		}
 
 		const user_id = req.user?.id || req.user;
-		const managerMuseum = await getManagerMuseum(user_id);
+		const managerMuseum = await get_museum
+	(user_id);
 		if (!managerMuseum) {
 			return res.status(404).json({ error: "No museum assigned to this manager" });
 		}
@@ -210,6 +277,10 @@ router.put("/artifact/:id", authorization, async (req, res) => {
 			categoryId = categoryRes.rows[0]?.category_id || current.rows[0].category_id;
 		}
 
+		if (picture_url && picture_url !== current.rows[0].picture_url && current.rows[0].picture_url) {
+			await delete_clound(current.rows[0].picture_url);
+		}
+
 		const updated = await client.query(
 			`UPDATE artifacts
 			 SET artifact_name = $1,
@@ -237,7 +308,7 @@ router.put("/artifact/:id", authorization, async (req, res) => {
 
 		if (updated.rows.length === 0) {
 			await client.query("ROLLBACK");
-			return res.status(404).json({ error: "Artifact not found for this manager museum" });
+			return res.status(404).json({ error: "Artifact not found" });
 		}
 
 		await client.query("COMMIT");
@@ -258,7 +329,8 @@ router.delete("/artifact/:id", authorization, async (req, res) => {
 		}
 
 		const user_id = req.user?.id || req.user;
-		const managerMuseum = await getManagerMuseum(user_id);
+		const managerMuseum = await get_museum
+	(user_id);
 		if (!managerMuseum) {
 			return res.status(404).json({ error: "No museum assigned to this manager" });
 		}
@@ -269,13 +341,17 @@ router.delete("/artifact/:id", authorization, async (req, res) => {
 			`DELETE FROM artifacts
 			 WHERE artifact_id = $1
 			 AND museum_id = $2
-			 RETURNING artifact_id`,
+			 RETURNING artifact_id , picture_url`,
 			[artifactId, managerMuseum.museum_id]
 		);
 
 		if (removed.rows.length === 0) {
 			await client.query("ROLLBACK");
 			return res.status(404).json({ error: "Artifact not found for this manager museum" });
+		}
+
+		if (removed.rows[0].picture_url) {
+			await delete_clound(removed.rows[0].picture_url);
 		}
 
 		await client.query("COMMIT");
@@ -287,5 +363,253 @@ router.delete("/artifact/:id", authorization, async (req, res) => {
 		client.release();
 	}
 });
+
+
+// add new artifact
+router.post("/add", authorization, async (req, res) => {
+	const client = await pool.connect();
+	try {
+		if (req.user?.role && req.user.role !== "manager") {
+			return res.status(403).json("Only Manager Authorized");
+		}
+		
+		const user_id = req.user?.id || req.user;
+		const managerMuseum = await get_museum
+	(user_id);
+		if (!managerMuseum) {
+			return res.status(404).json({ error: "No museum assigned to this manager" });
+		}
+		
+		const {
+			artifact_name,
+			description,
+			creator,
+			time_period,
+			origin,
+			picture_url,
+			category_name
+		} = req.body;
+
+		await client.query("BEGIN");
+
+		let categoryId = null;
+		if (category_name && category_name.trim()) {
+			const categoryRes = await client.query(
+				`SELECT category_id
+				 FROM categories
+				 WHERE category_name = $1
+				 LIMIT 1`,
+				[category_name]
+			);
+			categoryId = categoryRes.rows[0]?.category_id || null;
+		}
+
+		const newArtifact = await client.query(
+			`INSERT INTO artifacts (artifact_name, description, creator, time_period, origin, picture_url, category_id, museum_id)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			 RETURNING artifact_id`,
+			[
+				artifact_name,description,creator,time_period,origin,picture_url,categoryId,
+				managerMuseum.museum_id
+			]
+		);
+
+		await client.query("COMMIT");
+		res.status(201).json({ msg: "Artifact added", artifactId: newArtifact.rows[0].artifact_id });
+	} catch (error) {
+		await client.query("ROLLBACK");
+		res.status(500).json({ error: error.message });
+	} finally {
+		client.release();
+	}
+});
+
+
+// create a museum 
+router.post("/create", authorization, async (req, res) => {
+	const client = await pool.connect();
+	try {
+		if (req.user?.role && req.user.role !== "manager") {
+			return res.status(403).json("Only Manager Authorized");
+		}
+
+		const user_id = req.user?.id || req.user;
+		const {
+			museum_name,
+			description,
+			picture_url,
+			location_id,
+			category,
+			open_days,
+			city,
+			country,
+			latitude,
+			longitude,
+		} = req.body;
+
+		await client.query("BEGIN");
+
+		const duplicate = await client.query(
+			`SELECT museum_id
+			 FROM museums
+			 WHERE museum_name ilike $1
+			 LIMIT 1`,
+			[museum_name]
+		);
+
+		if (duplicate.rows.length > 0) {
+			await client.query("ROLLBACK");
+			return res.status(400).json({ error: "Museum already exists" });
+		}
+
+		const parsedLat = parseCoordinate(latitude);
+const parsedLon = parseCoordinate(longitude);
+
+const loc_res = await client.query(
+    `SELECT get_location_id($1, $2, $3, $4, $5) AS location_id`,
+    [location_id || null, city, country, parsedLat, parsedLon]
+);
+const res_loc_id = loc_res.rows[0].location_id;
+
+		if (!res_loc_id) {
+			await client.query("ROLLBACK");
+			return res.status(400).json({ error: "City and country are required" });
+		}
+
+		const newMuseum = await client.query(
+			`INSERT INTO museums (museum_name, description, picture_url, location_id, category, open_days, manager_id)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7)
+			 RETURNING museum_id`,
+			[
+				museum_name,
+				description,
+				picture_url,
+				res_loc_id,
+				category,
+				open_days,
+				user_id,
+			]
+		);
+
+		// returning na dile abar select kora lagbe
+
+		await client.query("COMMIT");
+		res.status(201).json({ msg: "Museum created", museumId: newMuseum.rows[0].museum_id });
+	} catch (error) {
+		await client.query("ROLLBACK");
+		console.error("CREATE MUSEUM ERROR:", error.message);
+		res.status(500).json({ error: error.message });
+	} finally {
+		client.release();
+	}
+});
+
+
+// edit museum infos
+router.put("/edit", authorization, async (req, res) => {
+	const client = await pool.connect();
+	try {
+		if (req.user?.role && req.user.role !== "manager") {
+			return res.status(403).json("Only Manager Authorized");
+		}
+		
+		const user_id = req.user?.id || req.user;
+		const managerMuseum = await get_museum
+		(user_id);	
+		if (!managerMuseum) {
+			return res.status(404).json({ error: "No museum assigned to this manager" });
+		}
+
+		const {
+			museum_name,
+			description,
+			picture_url,
+			location_id,
+			category,
+			open_days,
+			city,
+			country,
+			latitude,
+			longitude,
+		} = req.body;
+
+		await client.query("BEGIN");
+
+		const current = await client.query(
+			`SELECT m.museum_name, m.description, m.picture_url, m.location_id, m.category, m.open_days,
+					COALESCE(l.city, '') AS city,
+					l.latitude,
+					l.longitude,
+					COALESCE(c.name, '') AS country
+			 FROM museums m
+			 LEFT JOIN locations l ON m.location_id = l.location_id
+			 LEFT JOIN country c ON l.country_id = c.country_id
+			 WHERE museum_id = $1
+			 AND manager_id = $2
+			 LIMIT 1`,
+			[managerMuseum.museum_id, user_id]
+		);
+
+		if (current.rows.length === 0) {
+			await client.query("ROLLBACK");
+			return res.status(404).json({ error: "Museum not found for this manager" });
+		}
+
+		const parsedLat = parseCoordinate(latitude ?? current.rows[0].latitude);
+		const parsedLon = parseCoordinate(longitude ?? current.rows[0].longitude);
+
+		const loc_res = await client.query(
+    	`SELECT get_location_id($1, $2, $3, $4, $5) AS location_id`,
+    	[
+        location_id ?? current.rows[0].location_id,
+        city ?? current.rows[0].city,
+        country ?? current.rows[0].country,
+        parsedLat,
+        parsedLon
+    	]
+		);
+		const res_loc_id = loc_res.rows[0].location_id;
+
+		if (!res_loc_id) {
+			await client.query("ROLLBACK");
+			return res.status(400).json({ error: "City and country are required" });
+		}
+
+		if (picture_url && picture_url !== current.rows[0].picture_url && current.rows[0].picture_url) {
+			await delete_clound(current.rows[0].picture_url);
+		}
+
+		const updated = await client.query(
+			`UPDATE museums
+			 SET museum_name = $1, description = $2, picture_url = $3, location_id = $4, category = $5, open_days = $6 
+			 WHERE museum_id = $7 AND manager_id = $8
+			 RETURNING museum_id`,
+			[
+				museum_name ?? current.rows[0].museum_name,
+				description ?? current.rows[0].description,
+				picture_url ?? current.rows[0].picture_url,
+				res_loc_id,
+				category ?? current.rows[0].category,
+				open_days ?? current.rows[0].open_days,
+				managerMuseum.museum_id,
+				user_id
+			]
+		);
+
+		if (updated.rows.length === 0) {
+			await client.query("ROLLBACK");
+			return res.status(404).json({ error: "Museum not found" });
+		}
+
+		await client.query("COMMIT");
+		res.json({ msg: "Museum updated" });
+	} catch (error) {
+		await client.query("ROLLBACK");
+		res.status(500).json({ error: error.message });
+	} finally {
+		client.release();
+	}
+});
+
 
 module.exports = router;

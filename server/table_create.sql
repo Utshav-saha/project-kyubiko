@@ -384,9 +384,67 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-// -- like count - procedure
-// -- views count + add to artifacts_views trigger
 
+CREATE OR REPLACE FUNCTION get_location_id(
+    p_location_id INTEGER,
+    p_city VARCHAR,
+    p_country VARCHAR,
+    p_latitude DECIMAL,
+    p_longitude DECIMAL
+)
+RETURNS INTEGER AS $$
+DECLARE
+    v_country_id INTEGER;
+    v_location_id INTEGER;
+BEGIN
+
+    IF p_location_id IS NOT NULL THEN
+        RETURN p_location_id;
+    END IF;
+
+    IF p_city IS NULL OR TRIM(p_city) = '' OR p_country IS NULL OR TRIM(p_country) = '' THEN
+        RETURN NULL;
+    END IF;
+
+    --  Check Country
+    SELECT country_id INTO v_country_id 
+    FROM country 
+    WHERE LOWER(name) = LOWER(TRIM(p_country)) 
+    LIMIT 1;
+
+    IF v_country_id IS NULL THEN
+        INSERT INTO country (name) 
+        VALUES (TRIM(p_country)) 
+        RETURNING country_id INTO v_country_id;
+    END IF;
+
+    --  Check City
+    SELECT location_id INTO v_location_id 
+    FROM locations 
+    WHERE LOWER(city) = LOWER(TRIM(p_city)) 
+    AND country_id = v_country_id 
+    LIMIT 1;
+
+    IF v_location_id IS NOT NULL THEN
+        -- Update coordinates 
+        UPDATE locations
+        SET latitude = COALESCE(p_latitude, latitude),
+            longitude = COALESCE(p_longitude, longitude)
+        WHERE location_id = v_location_id;
+        
+        RETURN v_location_id;
+    ELSE
+        -- Insert new 
+        INSERT INTO locations (city, latitude, longitude, country_id)
+        VALUES (TRIM(p_city), p_latitude, p_longitude, v_country_id)
+        RETURNING location_id INTO v_location_id;
+    
+        RETURN v_location_id;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+// -- like count - procedure
 
 // -- Complex Queries
 
@@ -416,4 +474,8 @@ SELECT
         WHERE s.mini_museum_id = $1
         GROUP BY s.name, s.position, s.mini_museum_id
         ORDER BY s.position ASC;
+
+
+// --  Suggest Artifacts
+
 

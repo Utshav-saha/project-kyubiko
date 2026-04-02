@@ -46,10 +46,7 @@ const getCommunityCategory = (museum) => {
 // get infos
 router.get("/authorize", authorization, async (req, res) => {
 	try {
-		if (req.user?.role && req.user.role !== "curator") {
-			return res.status(403).json("Only Curator Authorized");
-		}
-
+		
 		const user_id = req.user?.id || req.user;
 
 		const user = await pool.query(
