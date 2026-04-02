@@ -430,7 +430,7 @@ export default function GoToMuseum() {
           {filteredArtifacts.length === 0 ? (
             <div className="text-center text-white/70 py-10">No artifacts found in this category.</div>
           ) : (
-            <div className="relative h-[520px] flex items-center justify-center">
+            <div className="relative h-130 flex items-center justify-center">
               <button
                 onClick={prev}
                 className="absolute left-2 md:left-8 z-20 w-11 h-11 rounded-full bg-white/15 text-white border border-white/20 hover:bg-white/25 flex items-center justify-center"
@@ -439,7 +439,7 @@ export default function GoToMuseum() {
               </button>
 
               {leftArtifact && (
-                <div className="hidden md:block absolute left-[7%] w-64 h-[390px] opacity-35 scale-90 pointer-events-none transition-all">
+                <div className="hidden md:block absolute left-[7%] w-64 h-97.5 opacity-35 scale-90 pointer-events-none transition-all">
                   <img src={leftArtifact.picture_url || "https://placehold.co/600x800"} alt={leftArtifact.artifact_name} className="w-full h-56 object-cover rounded-t-xl" />
                   <div className="bg-white/10 text-white p-4 rounded-b-xl backdrop-blur-sm">
                     <p className="font-playfair text-lg font-bold line-clamp-1">{leftArtifact.artifact_name}</p>
@@ -449,7 +449,7 @@ export default function GoToMuseum() {
 
               {activeArtifact && (
                 <div
-                  className="relative w-full max-w-sm h-[460px] bg-white rounded-xl overflow-hidden shadow-2xl border border-white/20 transition-transform"
+                  className="relative w-full max-w-sm h-115 bg-white rounded-xl overflow-hidden shadow-2xl border border-white/20 transition-transform"
                   onMouseDown={(e) => setDragStartX(e.clientX)}
                   onMouseUp={(e) => {
                     if (dragStartX === null) return;
@@ -501,7 +501,7 @@ export default function GoToMuseum() {
               )}
 
               {rightArtifact && (
-                <div className="hidden md:block absolute right-[7%] w-64 h-[390px] opacity-35 scale-90 pointer-events-none transition-all">
+                <div className="hidden md:block absolute right-[7%] w-64 h-97.5 opacity-35 scale-90 pointer-events-none transition-all">
                   <img src={rightArtifact.picture_url || "https://placehold.co/600x800"} alt={rightArtifact.artifact_name} className="w-full h-56 object-cover rounded-t-xl" />
                   <div className="bg-white/10 text-white p-4 rounded-b-xl backdrop-blur-sm">
                     <p className="font-playfair text-lg font-bold line-clamp-1">{rightArtifact.artifact_name}</p>

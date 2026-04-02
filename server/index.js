@@ -17,6 +17,8 @@ app.use("/view", require("./routes/view"));
 app.use("/explore", require("./routes/explore"));
 app.use("/museum", require("./routes/museum"));
 app.use("/leaderboard", require("./routes/leaderboard"));
+app.use('/profile', require('./routes/profile'));
+app.use("/landing", require("./routes/landing"));
 app.use("/manager", require("./routes/manager"));
 app.use("/quiz", require("./routes/quiz"));
 app.use("/manager-quiz", require("./routes/manager_quiz"));
