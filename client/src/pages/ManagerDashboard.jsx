@@ -347,7 +347,7 @@ export default function ManagerDashboard() {
             </li>
             <li>
               <Link
-                to="/quiz"
+                to="/manager-quiz/new"
                 className="hover:text-white hover:bg-white/10 rounded-lg transition-colors"
               >
                 Quiz
@@ -367,7 +367,7 @@ export default function ManagerDashboard() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-10">
         {!museum ? (
-          <div className="bg-white border border-dark-chocolate/10 rounded-2xl shadow-md p-10 text-center flex flex-col items-center justify-center min-h-[400px]">
+          <div className="bg-white border border-dark-chocolate/10 rounded-2xl shadow-md p-10 text-center flex flex-col items-center justify-center min-h-100">
             <h2 className="font-playfair text-4xl font-bold mb-4">
               You don't have a museum yet
             </h2>
@@ -430,7 +430,7 @@ export default function ManagerDashboard() {
                 </div>
               </div>
 
-              <div className="bg-white border border-dark-chocolate/10 rounded-2xl shadow-md overflow-hidden min-h-[300px] max-h-[500px] lg:max-h-none relative">
+              <div className="bg-white border border-dark-chocolate/10 rounded-2xl shadow-md overflow-hidden min-h-75 max-h-125 lg:max-h-none relative">
                 {" "}
                 {museum.image ? (
                   <img

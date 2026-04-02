@@ -444,7 +444,41 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-// -- like count - procedure
+
+// -- Procedures
+
+CREATE OR REPLACE PROCEDURE create_ques_ops(
+    IN p_quiz_id INT,
+    IN p_question_text TEXT,
+    IN p_options TEXT[],
+    IN p_correct_index INT,
+    IN p_image_url TEXT,
+    IN p_question_description TEXT,
+    OUT p_question_id INT
+)
+AS $$
+DECLARE
+    i INT;
+BEGIN
+
+    INSERT INTO questions (quiz_id, question_text, image_url, question_description)
+    VALUES (p_quiz_id, p_question_text, p_image_url, p_question_description)
+    RETURNING question_id INTO p_question_id;
+    
+    FOR i IN 1 .. array_length(p_options, 1) LOOP
+
+        INSERT INTO options (question_id, option_text, is_correct)
+        VALUES (p_question_id, p_options[i], (i - 1) = p_correct_index);
+
+    END LOOP;
+
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+
+
 
 // -- Complex Queries
 
