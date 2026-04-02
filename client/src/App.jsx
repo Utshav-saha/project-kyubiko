@@ -11,6 +11,7 @@ import Profile from "./pages/Profile";
 import Leaderboard from "./pages/Leaderboard";
 import Trivia from "./pages/Trivia";
 import ManagerDashboard from "./pages/ManagerDashboard";
+import CreateTour from "./pages/CreateTour";
 import Question from "./pages/Question";
 import Result from "./pages/Result";
 import { gsap } from "gsap";
@@ -32,6 +33,7 @@ function App() {
             <Route path="/view-museum/:id" element={<ViewMuseum />} />
             <Route path="/go-to-museum/:id" element={<GoToMuseum />} />
             <Route path="/manager-dashboard" element={<ManagerDashboard />} />
+            <Route path="/tours" element={<CreateTour />} />
             <Route path="/trivia/:id" element={<Trivia />} />
             <Route path="/trivia/:id/question" element={<Question />} />
             <Route path="/trivia/:id/result" element={<Result />} />

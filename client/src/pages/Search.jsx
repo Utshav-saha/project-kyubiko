@@ -49,9 +49,8 @@ export default function Search() {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const role = localStorage.getItem("role");
 
-        if (!token || role !== "curator") {
+        if (!token) {
           localStorage.removeItem("token");
           localStorage.removeItem("role");
           navigate("/login");

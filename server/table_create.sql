@@ -229,13 +229,15 @@ create table time_slots (
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     capacity INTEGER NOT NULL,
+    total_bookings INTEGER DEFAULT 0,
+    slot_color INTEGER DEFAULT 0 CHECK (slot_color BETWEEN 0 AND 11),
 
     tour_id INTEGER REFERENCES tours(tour_id) on delete CASCADE
 );
 
-INSERT INTO time_slots (start_time, end_time, capacity, tour_id)
+INSERT INTO time_slots (start_time, end_time, capacity, slot_color, tour_id)
 VALUES
-('10:00:00', '12:00:00', 20, 1);
+('10:00:00', '12:00:00', 20, 0, 1);
 
 create table bookings (
     booking_id SERIAL PRIMARY KEY,

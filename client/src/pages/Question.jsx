@@ -225,7 +225,7 @@ export default function Question() {
           </div>
         </div>
 
-        <div className="bg-[#205b3e] rounded-2xl shadow-xl p-5 md:p-7 text-white relative transition-all duration-300">
+        <div className="bg-dark-chocolate rounded-2xl shadow-xl p-5 md:p-7 text-white relative transition-all duration-300">
           <p className="text-sm uppercase tracking-widest font-bold">Question</p>
           <p className="text-xs uppercase tracking-wider text-white/80 mt-1">
             {currentQuestion.subject_label || "Museum"}
