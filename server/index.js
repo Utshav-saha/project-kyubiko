@@ -23,6 +23,7 @@ app.use("/manager", require("./routes/manager"));
 app.use("/quiz", require("./routes/quiz"));
 app.use("/manager-quiz", require("./routes/manager_quiz"));
 app.use("/tour", require("./routes/tour"));
+app.use("/analytics", require("./routes/analytics"));
 
 
 app.listen(PORT, () => {

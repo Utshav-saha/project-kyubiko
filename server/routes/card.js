@@ -10,30 +10,45 @@ router.post("/view", authorization, async(req, res)=>{
         const user_id = req.user?.id || req.user;
         const artifact_id = req.body.artifact_id;
 
+        if (!artifact_id) {
+            return res.status(400).json({ msg: "artifact_id is required" });
+        }
+
         await client.query("BEGIN");
 
-        const check = await client.query(
-            `
-            SELECT 1 FROM ARTIFACTS_VIEWS
-            WHERE USER_ID = $1 AND ARTIFACT_ID = $2
-            `, [user_id, artifact_id]
-        );
-        if(check.rows.length > 0){
-            await client.query("ROLLBACK");
-            return res.status(200).json({ msg: "View already recorded" });
-        }
+        // const check = await client.query(
+        //     `
+        //     SELECT 1 FROM ARTIFACTS_VIEWS
+        //     WHERE USER_ID = $1 AND ARTIFACT_ID = $2
+        //     `, [user_id, artifact_id]
+        // );
+        // if(check.rows.length > 0){
+        //     await client.query("ROLLBACK");
+        //     return res.status(200).json({ msg: "View already recorded" });
+        // }
 
         const add = await client.query(`
             INSERT INTO ARTIFACTS_VIEWS 
             (USER_ID, ARTIFACT_ID, VIEW_TIME)
             VALUES($1, $2, NOW())
             `, [user_id, artifact_id])
+
         await client.query("COMMIT");
+        // console.log("[card/view] inserted", {
+        //     user_id,
+        //     artifact_id,
+        //     rowCount: add.rowCount,
+        // });
         res.json({ msg: "artifact viewed" });
 
     } catch (error) {
         await client.query("ROLLBACK");
-        res.status(500).json({ error: error.message });
+        // console.error("[card/view] insert failed", {
+        //     user_id: req.user?.id || req.user,
+        //     artifact_id: req.body?.artifact_id,
+        //     error: error.message,
+        // });
+        res.status(500).json({ msg: "Could not record artifact view", error: error.message });
     }
     finally{
         client.release();

@@ -210,12 +210,12 @@ export default function MyMuseums () {
                   <li>
                     <Link to="/search">Search</Link>
                   </li>
-                  <li>
+                  {/* <li>
                     <Link to="/profile">Profile</Link>
-                  </li>
+                  </li> */}
                 </ul>
               </div>
-              <a className="btn btn-ghost text-xl text-white ml-5">Logo</a>
+              <a className="btn btn-ghost text-xl text-white ml-5">Kyubiko</a>
             </div>
             <div className="navbar-center hidden lg:flex">
               <ul className="menu menu-horizontal px-1 text-white">
@@ -231,9 +231,9 @@ export default function MyMuseums () {
                 <li>
                   <Link to="/search">Search</Link>
                 </li>
-                <li>
+                {/* <li>
                   <Link to="/profile">Profile</Link>
-                </li>
+                </li> */}
               </ul>
             </div>
 

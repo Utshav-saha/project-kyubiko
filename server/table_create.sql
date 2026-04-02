@@ -288,70 +288,159 @@ CREATE TABLE sections (
     FOREIGN KEY (artifact_id) REFERENCES artifacts(artifact_id) ON DELETE CASCADE ON UPDATE CASCADE
 )
 
--- // Triggers
-CREATE OR REPLACE FUNCTION check_duplicate_artifact() 
-returns TRIGGER AS $$
-BEGIN
-    if EXISTS (
-        SELECT 1 
-        FROM artifacts 
-        WHERE artifact_name = NEW.artifact_name
-        AND creator = NEW.creator
-        AND origin = NEW.origin
+CREATE TABLE museum_daily_stats (
+    stat_id SERIAL PRIMARY KEY,
+    museum_id INTEGER REFERENCES museums(museum_id) ON DELETE CASCADE,
+    stat_date DATE DEFAULT CURRENT_DATE,
+    daily_views INTEGER DEFAULT 0,
+    daily_additions INTEGER DEFAULT 0,
+    daily_bookings INTEGER DEFAULT 0,
+    UNIQUE(museum_id, stat_date)
+);
+
+-- // triggers
+create or replace function check_duplicate_artifact() 
+returns trigger as $$
+begin
+    if exists (
+        select 1 
+        from artifacts 
+        where artifact_name = new.artifact_name
+        and creator = new.creator
+        and origin = new.origin
     ) then
     
         return null;
-    END if;
+    end if;
 
-    return NEW;
-END;
-$$ LANGUAGE plpgsql;
+    return new;
+end;
+$$ language plpgsql;
 
-CREATE TRIGGER prevent_duplicate_artifact
-BEFORE INSERT ON artifacts
-FOR EACH ROW
-EXECUTE FUNCTION check_duplicate_artifact();
+create trigger prevent_duplicate_artifact
+before insert on artifacts
+for each row
+execute function check_duplicate_artifact();
 
 -- artifact view count trigger - 1 for each users unique view
-CREATE OR REPLACE FUNCTION increment_count()
-RETURNS TRIGGER AS $$
-BEGIN
-    UPDATE ARTIFACTS
-    SET ARTIFACT_VIEWS = ARTIFACT_VIEWS + 1
-    WHERE ARTIFACT_ID = NEW.ARTIFACT_ID;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+create or replace function increment_count()
+returns trigger as $$
+begin
+    update artifacts
+    set artifact_views = artifact_views + 1
+    where artifact_id = new.artifact_id;
+    return new;
+end;
+$$ language plpgsql;
 
-CREATE TRIGGER increase_view_count
-AFTER INSERT ON ARTIFACTS_VIEWS
-FOR EACH ROW
-EXECUTE FUNCTION increment_count();
+create trigger increase_view_count
+after insert on artifacts_views
+for each row
+execute function increment_count();
 
 
 -- keep latest 20 artifact views for each user
-CREATE OR REPLACE FUNCTION last_10_records()
-RETURNS TRIGGER AS $$
-BEGIN
-    DELETE FROM ARTIFACTS_VIEWS
-    WHERE ARTIFACT_VIEW_ID IN (
-        SELECT ARTIFACT_VIEW_ID
-        FROM ARTIFACTS_VIEWS
-        WHERE USER_ID = NEW.USER_ID
-        ORDER BY VIEW_TIME DESC
-        OFFSET 20 // -- 21 no ta ashbe 
+create or replace function last_10_records()
+returns trigger as $$
+begin
+    delete from artifacts_views
+    where artifact_view_id in (
+        select artifact_view_id
+        from artifacts_views
+        where user_id = new.user_id
+        order by view_time desc
+        offset 20 // -- 21 no ta ashbe 
     )
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+    return new;
+end;
+$$ language plpgsql;
 
-CREATE TRIGGER LIMIT_VIEWS
-AFTER INSERT ON ARTIFACTS_VIEWS
-FOR EACH ROW
-EXECUTE FUNCTION last_10_records();
+create or replace trigger limit_views
+after insert on artifacts_views
+for each row
+execute function last_10_records();
 
 
--- // Functions
+
+-- // stats triggers 
+
+-- // on conflict = same date thakle update , else insert 
+
+create or replace function update_daily_views_stats()
+returns trigger as $$
+declare
+    v_museum_id integer;
+begin
+    select museum_id into v_museum_id from artifacts where artifact_id = new.artifact_id;
+
+    if v_museum_id is not null then
+        
+        insert into museum_daily_stats (museum_id, stat_date, daily_views)
+        values (v_museum_id, current_date, 1)
+        on conflict (museum_id, stat_date)
+        do update set daily_views = museum_daily_stats.daily_views + 1;
+    end if;
+
+    return new;
+end;
+$$ language plpgsql;
+create or replace trigger trigger_daily_museum_views
+after insert on artifacts_views
+for each row
+execute function update_daily_views_stats();
+
+
+
+create or replace function update_daily_additions_stats()
+returns trigger as $$
+declare
+    v_museum_id integer;
+begin
+    select museum_id into v_museum_id from artifacts where artifact_id = new.artifact_id;
+
+    if v_museum_id is not null then
+        
+        insert into museum_daily_stats (museum_id, stat_date, daily_additions)
+        values (v_museum_id, current_date, 1)
+        on conflict (museum_id, stat_date)
+        do update set daily_additions = museum_daily_stats.daily_additions + 1;
+    end if;
+
+    return new;
+end;
+$$ language plpgsql;
+create or replace trigger trigger_daily_museum_additions
+after insert on sections
+for each row
+execute function update_daily_additions_stats();
+
+
+
+create or replace function update_daily_bookings_stats()
+returns trigger as $$
+declare
+    v_museum_id integer;
+begin
+    select museum_id into v_museum_id from tours where tour_id = new.tour_id;
+
+    if v_museum_id is not null then
+        
+        insert into museum_daily_stats (museum_id, stat_date, daily_bookings)
+        values (v_museum_id, current_date, 1)
+        on conflict (museum_id, stat_date)
+        do update set daily_bookings = museum_daily_stats.daily_bookings + 1;
+    end if;
+
+    return new;
+end;
+$$ language plpgsql;
+create or replace trigger trigger_daily_museum_bookings
+after insert on bookings
+for each row
+execute function update_daily_bookings_stats();
+
+
+-- // functions
 create or replace function get_category(p_department varchar)
 returns integer as $$
 declare
@@ -396,118 +485,118 @@ end;
 $$ language plpgsql
 
 
-CREATE OR REPLACE FUNCTION GET_POSITION(p_museum_id INTEGER)
-RETURNS INTEGER AS $$
-DECLARE
-    max_position INTEGER;
-BEGIN
-    SELECT MAX(position) INTO max_position
-    FROM sections
-    WHERE mini_museum_id = p_museum_id;
-    RETURN COALESCE(max_position, 0) + 1;
-END;
-$$ LANGUAGE plpgsql;
+create or replace function get_position(p_museum_id integer)
+returns integer as $$
+declare
+    max_position integer;
+begin
+    select max(position) into max_position
+    from sections
+    where mini_museum_id = p_museum_id;
+    return coalesce(max_position, 0) + 1;
+end;
+$$ language plpgsql;
 
 
-CREATE OR REPLACE FUNCTION get_location_id(
-    p_location_id INTEGER,
-    p_city VARCHAR,
-    p_country VARCHAR,
-    p_latitude DECIMAL,
-    p_longitude DECIMAL
+create or replace function get_location_id(
+    p_location_id integer,
+    p_city varchar,
+    p_country varchar,
+    p_latitude decimal,
+    p_longitude decimal
 )
-RETURNS INTEGER AS $$
-DECLARE
-    v_country_id INTEGER;
-    v_location_id INTEGER;
-BEGIN
+returns integer as $$
+declare
+    v_country_id integer;
+    v_location_id integer;
+begin
 
-    IF p_location_id IS NOT NULL THEN
-        RETURN p_location_id;
-    END IF;
+    if p_location_id is not null then
+        return p_location_id;
+    end if;
 
-    IF p_city IS NULL OR TRIM(p_city) = '' OR p_country IS NULL OR TRIM(p_country) = '' THEN
-        RETURN NULL;
-    END IF;
+    if p_city is null or trim(p_city) = '' or p_country is null or trim(p_country) = '' then
+        return null;
+    end if;
 
-    --  Check Country
-    SELECT country_id INTO v_country_id 
-    FROM country 
-    WHERE LOWER(name) = LOWER(TRIM(p_country)) 
-    LIMIT 1;
+    --  check country
+    select country_id into v_country_id 
+    from country 
+    where lower(name) = lower(trim(p_country)) 
+    limit 1;
 
-    IF v_country_id IS NULL THEN
-        INSERT INTO country (name) 
-        VALUES (TRIM(p_country)) 
-        RETURNING country_id INTO v_country_id;
-    END IF;
+    if v_country_id is null then
+        insert into country (name) 
+        values (trim(p_country)) 
+        returning country_id into v_country_id;
+    end if;
 
-    --  Check City
-    SELECT location_id INTO v_location_id 
-    FROM locations 
-    WHERE LOWER(city) = LOWER(TRIM(p_city)) 
-    AND country_id = v_country_id 
-    LIMIT 1;
+    --  check city
+    select location_id into v_location_id 
+    from locations 
+    where lower(city) = lower(trim(p_city)) 
+    and country_id = v_country_id 
+    limit 1;
 
-    IF v_location_id IS NOT NULL THEN
-        -- Update coordinates 
-        UPDATE locations
-        SET latitude = COALESCE(p_latitude, latitude),
-            longitude = COALESCE(p_longitude, longitude)
-        WHERE location_id = v_location_id;
+    if v_location_id is not null then
+        -- update coordinates 
+        update locations
+        set latitude = coalesce(p_latitude, latitude),
+            longitude = coalesce(p_longitude, longitude)
+        where location_id = v_location_id;
         
-        RETURN v_location_id;
-    ELSE
-        -- Insert new 
-        INSERT INTO locations (city, latitude, longitude, country_id)
-        VALUES (TRIM(p_city), p_latitude, p_longitude, v_country_id)
-        RETURNING location_id INTO v_location_id;
+        return v_location_id;
+    else
+        -- insert new 
+        insert into locations (city, latitude, longitude, country_id)
+        values (trim(p_city), p_latitude, p_longitude, v_country_id)
+        returning location_id into v_location_id;
     
-        RETURN v_location_id;
-    END IF;
-END;
-$$ LANGUAGE plpgsql;
+        return v_location_id;
+    end if;
+end;
+$$ language plpgsql;
 
 
-// -- Procedures
+// -- procedures
 
-CREATE OR REPLACE PROCEDURE create_ques_ops(
-    IN p_quiz_id INT,
-    IN p_question_text TEXT,
-    IN p_options TEXT[],
-    IN p_correct_index INT,
-    IN p_image_url TEXT,
-    IN p_question_description TEXT,
-    OUT p_question_id INT
+create or replace procedure create_ques_ops(
+    in p_quiz_id int,
+    in p_question_text text,
+    in p_options text[],
+    in p_correct_index int,
+    in p_image_url text,
+    in p_question_description text,
+    out p_question_id int
 )
-AS $$
-DECLARE
-    i INT;
-BEGIN
+as $$
+declare
+    i int;
+begin
 
-    INSERT INTO questions (quiz_id, question_text, image_url, question_description)
-    VALUES (p_quiz_id, p_question_text, p_image_url, p_question_description)
-    RETURNING question_id INTO p_question_id;
+    insert into questions (quiz_id, question_text, image_url, question_description)
+    values (p_quiz_id, p_question_text, p_image_url, p_question_description)
+    returning question_id into p_question_id;
     
-    FOR i IN 1 .. array_length(p_options, 1) LOOP
+    for i in 1 .. array_length(p_options, 1) loop
 
-        INSERT INTO options (question_id, option_text, is_correct)
-        VALUES (p_question_id, p_options[i], (i - 1) = p_correct_index);
+        insert into options (question_id, option_text, is_correct)
+        values (p_question_id, p_options[i], (i - 1) = p_correct_index);
 
-    END LOOP;
+    end loop;
 
-END;
-$$ LANGUAGE plpgsql;
+end;
+$$ language plpgsql;
 
 
 
-// -- Complex Queries
+// -- complex queries
 
 -- fetch data for mini museums with sections and artifacts
-SELECT 
-            'section-' || s.position AS id, 
+select 
+            'section-' || s.position as id, 
             s.name,
-            COALESCE(
+            coalesce(
                 json_agg(
                     json_build_object(
                         'artifact_id', a.artifact_id,
@@ -520,43 +609,43 @@ SELECT
                         'origin', a.origin,
                         'category_name', cat.category_name
                     ) 
-                ) FILTER (WHERE a.artifact_id IS NOT NULL),
+                ) filter (where a.artifact_id is not null),
                 '[]'::json
-            ) AS items
-        FROM sections s
-        LEFT JOIN artifacts a ON s.artifact_id = a.artifact_id
-        LEFT JOIN categories cat ON a.category_id = cat.category_id
-        WHERE s.mini_museum_id = $1
-        GROUP BY s.name, s.position, s.mini_museum_id
-        ORDER BY s.position ASC;
+            ) as items
+        from sections s
+        left join artifacts a on s.artifact_id = a.artifact_id
+        left join categories cat on a.category_id = cat.category_id
+        where s.mini_museum_id = $1
+        group by s.name, s.position, s.mini_museum_id
+        order by s.position asc;
 
 
-// --  Suggest Artifacts
+// --  suggest artifacts
 
-WITH user_history AS (
-    SELECT artifact_id
-    FROM artifacts_views
-    WHERE user_id = $1
+with user_history as (
+    select artifact_id
+    from artifacts_views
+    where user_id = $1
 
-    UNION
+    union
 
-    SELECT s.artifact_id
-    FROM sections s
-    JOIN mini_museums mm ON s.mini_museum_id = mm.mini_museum_id
-    WHERE mm.curator_id = $1
-      AND s.artifact_id IS NOT NULL
+    select s.artifact_id
+    from sections s
+    join mini_museums mm on s.mini_museum_id = mm.mini_museum_id
+    where mm.curator_id = $1
+      and s.artifact_id is not null
 ),
-user_preferences AS (
-    SELECT
+user_preferences as (
+    select
         a.category_id,
-        AVG((a.start_year + a.end_year) / 2.0) AS avg_year,
-        COUNT(*) AS category_weight
-    FROM user_history uh
-    JOIN artifacts a ON uh.artifact_id = a.artifact_id
-    WHERE a.start_year IS NOT NULL AND a.end_year IS NOT NULL
-    GROUP BY a.category_id
+        avg((a.start_year + a.end_year) / 2.0) as avg_year,
+        count(*) as category_weight
+    from user_history uh
+    join artifacts a on uh.artifact_id = a.artifact_id
+    where a.start_year is not null and a.end_year is not null
+    group by a.category_id
 )
-SELECT
+select
     a.artifact_id,
     a.artifact_name,
     a.description,
@@ -569,22 +658,22 @@ SELECT
     c.category_name,
     a.start_year,
     a.end_year,
-    ABS(((a.start_year + a.end_year) / 2.0) - up.avg_year) AS era_diff
-FROM artifacts a
-JOIN user_preferences up ON a.category_id = up.category_id
-LEFT JOIN categories c ON a.category_id = c.category_id
-WHERE a.start_year IS NOT NULL
-  AND a.end_year IS NOT NULL
-  AND NOT EXISTS (
-      SELECT 1
-      FROM sections s
-      JOIN mini_museums mm ON s.mini_museum_id = mm.mini_museum_id
-      WHERE mm.curator_id = $1
-        AND s.artifact_id = a.artifact_id
+    abs(((a.start_year + a.end_year) / 2.0) - up.avg_year) as era_diff
+from artifacts a
+join user_preferences up on a.category_id = up.category_id
+left join categories c on a.category_id = c.category_id
+where a.start_year is not null
+  and a.end_year is not null
+  and not exists (
+      select 1
+      from sections s
+      join mini_museums mm on s.mini_museum_id = mm.mini_museum_id
+      where mm.curator_id = $1
+        and s.artifact_id = a.artifact_id
   )
-ORDER BY
-    up.category_weight DESC,
-    era_diff ASC
-LIMIT 5;
+order by
+    up.category_weight desc,
+    era_diff asc
+limit 5;
 
 
