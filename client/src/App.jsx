@@ -9,6 +9,7 @@ import ViewMuseum from "./pages/ViewMuseum";
 import GoToMuseum from "./pages/GoToMuseum";
 import Profile from "./pages/Profile";
 import Leaderboard from "./pages/Leaderboard";
+import Trivia from "./pages/Trivia";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -27,6 +28,7 @@ function App() {
             <Route path="/my-museums" element={<MyMuseums />} />
             <Route path="/view-museum/:id" element={<ViewMuseum />} />
             <Route path="/go-to-museum/:id" element={<GoToMuseum />} />
+            <Route path="/trivia/:id" element={<Trivia />} />
             <Route path="/leaderboard/:id" element={<Leaderboard />} />
             <Route path="/profile" element={<Profile />} />
         </Routes>

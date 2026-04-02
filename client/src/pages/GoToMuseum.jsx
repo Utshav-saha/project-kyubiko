@@ -380,7 +380,13 @@ export default function GoToMuseum() {
               <p><span className="font-bold">Category:</span> {museum?.category || "Unknown"}</p>
             </div>
 
-            <div className="mt-auto">
+            <div className="mt-auto flex flex-wrap items-center gap-3">
+              <Link
+                to={`/trivia/${id}`}
+                className="btn bg-white text-dark-chocolate border border-dark-chocolate/20 hover:bg-old-paper"
+              >
+                Take Trivia
+              </Link>
               <Link
                 to={`/leaderboard/${id}`}
                 className="btn bg-dark-chocolate text-white hover:bg-accent-orange border-none"
