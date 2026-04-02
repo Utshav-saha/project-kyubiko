@@ -12,7 +12,7 @@ export default function UserAvatarMenu({ user, logoutOnly = false }) {
     localStorage.removeItem("username");
     localStorage.removeItem("avatar_url");
     localStorage.removeItem("user");
-    navigate("/login");
+    navigate("/");
   };
 
   return (

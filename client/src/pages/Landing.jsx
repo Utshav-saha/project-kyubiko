@@ -3,13 +3,14 @@ import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Link } from "react-router-dom";
+import { API_URL } from "../config";
 
 import Card from "../components/common/Card.jsx";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 const Landing = () => {
-  const container = useRef(); 
+  const container = useRef();
   const slides = [
     {
       id: 1,
@@ -37,7 +38,7 @@ const Landing = () => {
   const [artefacts, setArtefacts] = useState([]);
 
   useEffect(() => {
-    fetch("/artefacts.json")
+    fetch(`${API_URL}/landing/top-artifacts`)
       .then((response) => response.json())
       .then((data) => setArtefacts(data))
       .catch((error) => console.error("Error fetching artefacts:", error));
@@ -57,12 +58,12 @@ const Landing = () => {
         .from(
           ".hero-img-left",
           { x: -100, opacity: 0, duration: 1.2, ease: "power2.out" },
-          "-=0.8"
+          "-=0.8",
         )
         .from(
           ".hero-img-right",
           { x: 100, opacity: 0, duration: 1.2, ease: "power2.out" },
-          "-=1.2"
+          "-=1.2",
         );
 
       gsap.to(".axe-anim", {
@@ -98,20 +99,21 @@ const Landing = () => {
         },
       });
     },
-    { scope: container }
+    { scope: container },
   );
 
   useGSAP(
     () => {
       if (artefacts.length === 0) return;
 
-      gsap.fromTo(".artefact-card",
-        { 
+      gsap.fromTo(
+        ".artefact-card",
+        {
           opacity: 0,
           y: 100,
-          scale: 0.8 
+          scale: 0.8,
         },
-        { 
+        {
           opacity: 1,
           y: 0,
           scale: 1,
@@ -121,12 +123,12 @@ const Landing = () => {
           scrollTrigger: {
             trigger: ".artefact-section",
             start: "top 60%",
-            toggleActions: "play none none reverse" 
-          }
-        }
+            toggleActions: "play none none reverse",
+          },
+        },
       );
     },
-    { scope: container, dependencies: [artefacts] }
+    { scope: container, dependencies: [artefacts] },
   );
 
   return (
@@ -169,21 +171,16 @@ const Landing = () => {
                   className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow text-white"
                 >
                   <li>
-                    <a>Home</a>
+                    <Link to="/login">Login/Signup</Link>
                   </li>
-                  <li>
-                    <a>Explore</a>
-                  </li>
-                  <li>
-                    <a>Archive</a>
-                  </li>
+                  
                 </ul>
               </div>
-              <a className="btn btn-ghost text-xl text-white ml-5">Logo</a>
+              <a className="btn btn-ghost text-xl text-white ml-5">Kyubiku</a>
             </div>
             <div className="navbar-center hidden lg:flex">
               <ul className="menu menu-horizontal px-1 text-white">
-                <li>
+                {/* <li>
                   <Link to="/">Home</Link>
                 </li>
                 <li>
@@ -191,11 +188,14 @@ const Landing = () => {
                 </li>
                 <li>
                   <Link to="/login">Archive</Link>
-                </li>
+                </li> */}
               </ul>
             </div>
             <div className="navbar-end">
-              <Link to="/login" className="btn btn-dash border-white text-white mr-5">
+              <Link
+                to="/login"
+                className="btn btn-dash border-white text-white mr-5"
+              >
                 Login / Sign up
               </Link>
             </div>
@@ -223,12 +223,9 @@ const Landing = () => {
 
             <div className="w-full relative bottom-6 lg:w-1/2 text-white z-10">
               <h1 className="hero-text-anim text-5xl lg:text-7xl font-playfair leading-tight mb-8">
-                Meet different <br />
-                <span className="italic font-light font-playfair opacity-90">
-                  of
-                </span>{" "}
+                Meet different <br />{" "}
                 <span className="font-light italic font-playfair opacity-90">
-                  culture
+                  cultures
                 </span>{" "}
                 from our <br />
                 archive.
@@ -236,11 +233,11 @@ const Landing = () => {
 
               <div className="hero-text-anim flex flex-col sm:flex-row items-start sm:items-center gap-8">
                 <Link to="/login">
-                    <button className="bg-[#FFE55C] text-black px-8 py-3 font-dmsans font-bold uppercase tracking-wider hover:bg-[#ffd633] transition-colors">
-                 Get Started
-                </button>
+                  <button className="bg-[#FFE55C] text-black px-8 py-3 font-dmsans font-bold uppercase tracking-wider hover:bg-[#ffd633] transition-colors rounded-md">
+                    Get Started
+                  </button>
                 </Link>
-                
+
                 <p className="max-w-xs text-sm text-gray-300 border-l border-gray-500 pl-4 leading-relaxed font-dmsans">
                   History is an umbrella of past events as the memory,
                   discovery, collection, and interpretation of events.
@@ -403,7 +400,7 @@ const Landing = () => {
                 </h2>
               </div>
               <div className="mt-10 flex justify-start lg:justify-center items-start">
-                <a className="btn btn-dash border-white text-white sm:ml-5">
+                <a className="btn btn-dash border-white text-white sm:ml-5" href="/login">
                   Book a Tour
                 </a>
               </div>
@@ -416,9 +413,20 @@ const Landing = () => {
                   className="artefact-card w-full flex justify-center"
                 >
                   <Card
-                    name={artefact.name}
-                    image={artefact.image}
+                    name={artefact.artifact_name}
+                    image={artefact.picture_url}
                     description={artefact.description}
+                    creator={artefact.creator}
+                    time_period={artefact.time_period}
+                    acquisition_date={artefact.acquisition_date}
+                    museum_name={artefact.museum_name}
+                    category={artefact.category_name}
+                    origin={artefact.origin}
+                    artifactId={artefact.artifact_id}
+                    userRole="guest"
+                    wishlist={[]}
+                    setWishlist={() => {}}
+                    setPopMsg={() => {}}
                   />
                 </div>
               ))}

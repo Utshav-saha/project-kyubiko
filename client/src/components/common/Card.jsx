@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { API_URL } from "../../config";
 
 export default function Card({
@@ -17,6 +18,7 @@ export default function Card({
   setWishlist,
   setPopMsg,
   userRole,
+  size = "md",
 }) {
   const [isFav, setIsFav] = useState(color);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,6 +29,19 @@ export default function Card({
   const [reply, setReply] = useState("");
 
   const [reviews, setReviews] = useState([]);
+
+  const cardSizeClass = size === "sm" ? "w-64 h-100" : "w-72 h-112.5";
+
+  const formattedAcquisitionDate = (() => {
+    if (!acquisition_date) return "Unknown";
+    const date = new Date(acquisition_date);
+    if (Number.isNaN(date.getTime())) return "Unknown";
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  })();
 
   const get_reviews = async () => {
     try {
@@ -184,7 +199,9 @@ export default function Card({
   return (
     <>
       {/* Card  */}
-      <div className="card group w-72 h-112.5 shadow-sm relative overflow-hidden rounded-xl flex flex-col bg-stone-100">
+      <div
+        className={`card group ${cardSizeClass} shadow-sm relative overflow-hidden rounded-xl flex flex-col bg-stone-100`}
+      >
         <button
           onClick={() => {
             if (isFav) {
@@ -247,9 +264,10 @@ export default function Card({
       </div>
 
       {/* Modal */}
-      {isModalOpen && (
-        <dialog className="modal modal-open z-999 bg-black/60 backdrop-blur-sm ">
-          <div className="modal-box max-w-5xl max-h-[90vh] overflow-y-auto p-0 bg-stone-100 text-stone-800 rounded-xl font-dmsans flex flex-col">
+      {isModalOpen &&
+        createPortal(
+          <dialog className="modal modal-open z-999 bg-black/60 backdrop-blur-sm ">
+            <div className="modal-box max-w-5xl max-h-[90vh] overflow-y-auto p-0 bg-stone-100 text-stone-800 rounded-xl font-dmsans flex flex-col">
             {/* Modal Top: Artifact Details */}
             <div className="flex flex-col md:flex-row relative bg-white">
               <button
@@ -314,7 +332,7 @@ export default function Card({
                         Museum & Acquisition
                       </span>
                       <span className="font-medium text-stone-800">
-                        {museum_name} • Acquired: {acquisition_date}
+                        {museum_name} • Acquired: {formattedAcquisitionDate}
                       </span>
                     </div>
                   </div>
@@ -564,15 +582,16 @@ export default function Card({
             </div>
           </div>
 
-          <form
-            method="dialog"
-            className="modal-backdrop"
-            onClick={() => setIsModalOpen(false)}
-          >
-            <button className="cursor-default">close</button>
-          </form>
-        </dialog>
-      )}
+            <form
+              method="dialog"
+              className="modal-backdrop"
+              onClick={() => setIsModalOpen(false)}
+            >
+              <button className="cursor-default">close</button>
+            </form>
+          </dialog>,
+          document.body,
+        )}
     </>
   );
 }

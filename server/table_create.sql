@@ -74,6 +74,9 @@ CREATE TABLE artifacts (
   picture_url TEXT,
   acquisition_date DATE,
   artifact_views INTEGER DEFAULT 0, 
+  start_year INTEGER,
+  end_year INTEGER,
+  origin VARCHAR(100),
 
   museum_id INTEGER REFERENCES museums(museum_id) on delete CASCADE,
   category_id INTEGER REFERENCES categories(category_id) ON DELETE SET NULL
@@ -252,6 +255,25 @@ create table bookings (
 INSERT INTO bookings (ticket_code, user_id, tour_id, time_slot_id)
 VALUES
 ('TESTTICKET123', 2, 1, 1);
+
+CREATE TABLE artifacts_views (
+    artifact_view_id SERIAL,
+    view_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id INTEGER,
+    artifact_id INTEGER,
+    
+    CONSTRAINT artifacts_views_pkey PRIMARY KEY (artifact_view_id),
+    
+    CONSTRAINT artifacts_views_user_id_fkey 
+        FOREIGN KEY (user_id) 
+        REFERENCES users (user_id) 
+        ON DELETE CASCADE,
+        
+    CONSTRAINT artifacts_views_artifact_id_fkey 
+        FOREIGN KEY (artifact_id) 
+        REFERENCES artifacts (artifact_id) 
+        ON DELETE CASCADE
+);
 
 
 
@@ -510,5 +532,59 @@ SELECT
 
 
 // --  Suggest Artifacts
+
+WITH user_history AS (
+    SELECT artifact_id
+    FROM artifacts_views
+    WHERE user_id = $1
+
+    UNION
+
+    SELECT s.artifact_id
+    FROM sections s
+    JOIN mini_museums mm ON s.mini_museum_id = mm.mini_museum_id
+    WHERE mm.curator_id = $1
+      AND s.artifact_id IS NOT NULL
+),
+user_preferences AS (
+    SELECT
+        a.category_id,
+        AVG((a.start_year + a.end_year) / 2.0) AS avg_year,
+        COUNT(*) AS category_weight
+    FROM user_history uh
+    JOIN artifacts a ON uh.artifact_id = a.artifact_id
+    WHERE a.start_year IS NOT NULL AND a.end_year IS NOT NULL
+    GROUP BY a.category_id
+)
+SELECT
+    a.artifact_id,
+    a.artifact_name,
+    a.description,
+    a.creator,
+    a.time_period,
+    a.picture_url,
+    a.origin,
+    a.acquisition_date,
+    a.category_id,
+    c.category_name,
+    a.start_year,
+    a.end_year,
+    ABS(((a.start_year + a.end_year) / 2.0) - up.avg_year) AS era_diff
+FROM artifacts a
+JOIN user_preferences up ON a.category_id = up.category_id
+LEFT JOIN categories c ON a.category_id = c.category_id
+WHERE a.start_year IS NOT NULL
+  AND a.end_year IS NOT NULL
+  AND NOT EXISTS (
+      SELECT 1
+      FROM sections s
+      JOIN mini_museums mm ON s.mini_museum_id = mm.mini_museum_id
+      WHERE mm.curator_id = $1
+        AND s.artifact_id = a.artifact_id
+  )
+ORDER BY
+    up.category_weight DESC,
+    era_diff ASC
+LIMIT 5;
 
 
