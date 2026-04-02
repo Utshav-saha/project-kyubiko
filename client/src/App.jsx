@@ -11,6 +11,8 @@ import Profile from "./pages/Profile";
 import Leaderboard from "./pages/Leaderboard";
 import Trivia from "./pages/Trivia";
 import ManagerDashboard from "./pages/ManagerDashboard";
+import Question from "./pages/Question";
+import Result from "./pages/Result";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -31,6 +33,8 @@ function App() {
             <Route path="/go-to-museum/:id" element={<GoToMuseum />} />
             <Route path="/manager-dashboard" element={<ManagerDashboard />} />
             <Route path="/trivia/:id" element={<Trivia />} />
+            <Route path="/trivia/:id/question" element={<Question />} />
+            <Route path="/trivia/:id/result" element={<Result />} />
             <Route path="/leaderboard/:id" element={<Leaderboard />} />
             <Route path="/profile" element={<Profile />} />
         </Routes>

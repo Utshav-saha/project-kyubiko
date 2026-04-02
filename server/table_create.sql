@@ -159,6 +159,7 @@ create table questions (
     question_id SERIAL PRIMARY KEY,
     question_text TEXT NOT NULL,
     image_url TEXT,
+    question_description TEXT,
 
     quiz_id INTEGER REFERENCES quizzes(quiz_id) on delete CASCADE
 );
@@ -186,6 +187,7 @@ create table user_quiz(
     user_quiz_id SERIAL PRIMARY KEY,
     score INTEGER DEFAULT 0,
     completion_time DECIMAL(10,2),
+    total_attempts INTEGER DEFAULT 0,
 
     user_id INTEGER REFERENCES users(user_id) on delete CASCADE,
     quiz_id INTEGER REFERENCES quizzes(quiz_id) on delete CASCADE
