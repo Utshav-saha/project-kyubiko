@@ -245,7 +245,7 @@ export default function Search() {
 
       <div className="relative min-h-screen bg-old-paper font-dmsans text-dark flex flex-col">
         {/* Noise Overlay */}
-        <div className="fixed inset-0 z-50 pointer-events-none opacity-15 bg-noise mix-blend-multiply"></div>
+        <div className="fixed inset-0 z-10 pointer-events-none opacity-15 bg-noise mix-blend-multiply"></div>
 
         {/* --- Navbar --- */}
         <div className="navbar shadow-sm z-20 bg-dark-chocolate relative">
@@ -315,7 +315,7 @@ export default function Search() {
           />
           <div className="absolute inset-0 bg-black/60"></div>
 
-          <div className="relative z-50 flex flex-col items-center justify-center h-full px-4 text-center">
+          <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-wide">
               Step Into the Unknown
             </h1>
@@ -351,7 +351,7 @@ export default function Search() {
 
               {/* Suggestions Dropdown */}
               {showSugg && sugg.length > 0 && (
-                <div className="absolute top-full left-0 w-[calc(100%-110px)] mt-2 bg-white rounded-xl shadow-2xl z-50 overflow-hidden border border-stone-200 text-left">
+                <div className="absolute top-full left-0 w-[calc(100%-110px)] mt-2 bg-white rounded-xl shadow-2xl z-20 overflow-hidden border border-stone-200 text-left">
                   {sugg.map((item, index) => (
                     <div
                       key={index}
@@ -627,13 +627,13 @@ export default function Search() {
               </div>
 
               {isWishlistVisible && (
-                <div className="fixed bottom-10 right-10 z-50 bg-white shadow-lg rounded-lg p-4">
+                <div className="fixed bottom-10 right-10 z-40 bg-white shadow-lg rounded-lg p-4">
                   <Wishlist items={wishlist} handleRemove={handleRemoveFav} />
                 </div>
               )}
 
               {popMsg && (
-                <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
+                <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-40">
                   {popMsg}
                 </div>
               )}

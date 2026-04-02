@@ -248,7 +248,7 @@ export default function Card({
 
       {/* Modal */}
       {isModalOpen && (
-        <dialog className="modal modal-open z-60 bg-black/60 backdrop-blur-sm ">
+        <dialog className="modal modal-open z-999 bg-black/60 backdrop-blur-sm ">
           <div className="modal-box max-w-5xl max-h-[90vh] overflow-y-auto p-0 bg-stone-100 text-stone-800 rounded-xl font-dmsans flex flex-col">
             {/* Modal Top: Artifact Details */}
             <div className="flex flex-col md:flex-row relative bg-white">

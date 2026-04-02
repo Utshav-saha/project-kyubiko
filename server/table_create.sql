@@ -54,7 +54,7 @@ CREATE TABLE museums (
   picture_url TEXT,
 
   location_id INTEGER REFERENCES locations(location_id) on delete CASCADE,
-  manager_id INTEGER REFERENCES users(user_id) on delete CASCADE
+  manager_id INTEGER UNIQUE REFERENCES users(user_id) on delete CASCADE
   
   
 );
