@@ -72,6 +72,89 @@ router.post("/fav", authorization, async(req, res)=>{
     finally{
         client.release();
     }
-})
+});
+
+// Get reviwes , stars and replies 
+router.get("/reviews", async(req, res)=>{
+
+
+    try {
+
+        const artifact_id = req.query.artifact_id;
+        const reveiws = await pool.query(
+            `SELECT R.REVIEW_ID , R.STARS, R.REVIEW_BODY, R.REVIEW_TIME, R.REPLY_ID, U.USERNAME , U.AVATAR_URL
+            FROM REVIEWS R
+            JOIN USERS U ON R.USER_ID = U.USER_ID
+            WHERE R.ARTIFACT_ID = $1
+             ORDER BY R.REVIEW_TIME DESC
+             `, [artifact_id]
+            
+        );
+
+        const nested = build_reviews(reveiws.rows);
+        res.json(nested);
+        
+    } catch (error) {
+           res.status(500).json({ error: error.message });
+    }
+});
+
+// add review
+router.post("/add_review", authorization, async(req, res)=>{
+    const client = await pool.connect();
+    try {
+
+        const user_id = req.user?.id || req.user;
+        const artifact_id = req.body.artifact_id;
+
+        await client.query("BEGIN");
+        const insert = await client.query(
+            `INSERT INTO REVIEWS
+            (STARS, REVIEW_BODY, REVIEW_TIME , USER_ID, ARTIFACT_ID, REPLY_ID)
+            VALUES($1, $2, CURRENT_TIMESTAMP, $3, $4, $5)`,
+            [req.body.stars, req.body.review_body, user_id, artifact_id, req.body.reply_id || null]
+        );
+        await client.query("COMMIT");
+        res.json({ msg: "Review added successfully" });
+
+        
+    } catch (error) {
+        await client.query("ROLLBACK");
+        console.error("Database Error:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+    finally{
+        client.release();
+    }
+});
+
+function build_reviews(reviews){
+
+    const mp = new Map();
+    const main_reviews = [];
+
+    reviews.forEach(element => {
+        mp.set(element.review_id, {
+            ... element, replies: []
+        });
+    });
+
+    reviews.forEach(element => {
+
+        const current = mp.get(element.review_id);
+        if(!current.reply_id){
+            main_reviews.push(current);
+        } else {
+            const parent = mp.get(element.reply_id);
+            if(parent){
+                parent.replies.push(current);
+            }
+        }
+    });
+
+
+    return main_reviews;
+};
+
 
 module.exports = router;
