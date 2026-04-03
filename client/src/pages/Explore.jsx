@@ -529,10 +529,9 @@ export default function Explore() {
         setTotalCommunityPages(Math.max(1, data.total_pages || 1));
       } catch (error) {
         console.error(error.message);
-        const fallback = dummyCommunityMuseums.slice(0, perPage);
-        setCommunityMuseums(fallback);
-        setCommunityTotal(dummyCommunityMuseums.length);
-        setTotalCommunityPages(Math.max(1, Math.ceil(dummyCommunityMuseums.length / perPage)));
+        setCommunityMuseums([]);
+        setCommunityTotal(0);
+        setTotalCommunityPages(1);
       }
     };
 

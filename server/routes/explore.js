@@ -2,9 +2,13 @@ const router = require("express").Router();
 const pool = require("../db");
 const authorization = require("../middleware/authorization");
 
+const normalizeRole = (role) =>
+	typeof role === "string" ? role.trim().toLowerCase() : "";
+
 const isViewerRole = (req) => {
 	if (!req.user?.role) return true;
-	return req.user.role === "curator" || req.user.role === "manager";
+	const role = normalizeRole(req.user.role);
+	return role === "curator" || role === "manager";
 };
 
 const getCommunityCategory = (museum) => {

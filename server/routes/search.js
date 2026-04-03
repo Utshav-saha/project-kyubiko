@@ -2,9 +2,13 @@ const router = require("express").Router();
 const pool = require("../db"); 
 const authorization = require("../middleware/authorization");
 
+const normalizeRole = (role) =>
+    typeof role === "string" ? role.trim().toLowerCase() : "";
+
 const isViewerRole = (req) => {
     if (!req.user?.role) return true;
-    return req.user.role === "curator" || req.user.role === "manager";
+    const role = normalizeRole(req.user.role);
+    return role === "curator" || role === "manager";
 };
 
 
@@ -100,12 +104,12 @@ router.get("/", authorization, async (req , res)=>{
             filters += ` AND CATEGORY_NAME  = $${values.length}`;
         }
 
-        const start = req.query.start;
-        const end = req.query.end;
-        if (start && end) {
+        const start = Number(req.query.start);
+        const end = Number(req.query.end);
+        if (Number.isFinite(start) && Number.isFinite(end)) {
             values.push(start, end);
-            filters += ` AND start_year >= $${values.length-1} AND end_year <= $${values.length}`;
-            
+            // Keep artifacts with missing year metadata instead of filtering them out entirely.
+            filters += ` AND (start_year IS NULL OR start_year >= $${values.length - 1}) AND (end_year IS NULL OR end_year <= $${values.length})`;
         }
 
         const origin = req.query.origin;

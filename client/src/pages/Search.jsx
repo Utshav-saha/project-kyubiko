@@ -32,7 +32,7 @@ export default function Search() {
 
   const [wishlist, setWishlist] = useState([]);
 
-  const [yearRange, setYearRange] = useState([-2000, 1500]);
+  const [yearRange, setYearRange] = useState([-3000, 2024]);
   const minYear = -3000;
   const maxYear = 2024;
 
@@ -191,8 +191,11 @@ export default function Search() {
       if (filterCat) params.append("category", filterCat);
       if (order) params.append("order", order);
 
-      params.append("start", yearRange[0]);
-      params.append("end", yearRange[1]);
+      const isFullRange = yearRange[0] === minYear && yearRange[1] === maxYear;
+      if (!isFullRange) {
+        params.append("start", yearRange[0]);
+        params.append("end", yearRange[1]);
+      }
       params.append("page", page);
 
       const token = localStorage.getItem("token");
@@ -419,7 +422,7 @@ export default function Search() {
                       setFilterMuseum("");
                       setFilterOrigin("");
                       setFilterCat("");
-                      setYearRange([-2000, 1500]);
+                      setYearRange([minYear, maxYear]);
                     }}
                   >
                     Reset All

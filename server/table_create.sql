@@ -122,6 +122,14 @@ CREATE table mini_museums (
     curator_id INTEGER REFERENCES users(user_id) on delete CASCADE
 );
 
+CREATE TABLE mini_museum_likes (
+    mini_museum_like_id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    mini_museum_id INTEGER NOT NULL REFERENCES mini_museums(mini_museum_id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (user_id, mini_museum_id)
+);
+
 INSERT INTO mini_museums (mini_museum_name, description, curator_id)
 VALUES
 ('test_mini_museum', 'This is a test mini museum description', 1);
@@ -297,6 +305,70 @@ CREATE TABLE museum_daily_stats (
     daily_bookings INTEGER DEFAULT 0,
     UNIQUE(museum_id, stat_date)
 );
+
+-- Increment likes on a mini museum and return the updated count.
+CREATE OR REPLACE FUNCTION increment_mini_museum_likes(p_mini_museum_id INTEGER)
+RETURNS INTEGER AS $$
+DECLARE
+    v_likes_count INTEGER;
+BEGIN
+    UPDATE mini_museums
+    SET likes_count = COALESCE(likes_count, 0) + 1
+    WHERE mini_museum_id = p_mini_museum_id
+    RETURNING likes_count INTO v_likes_count;
+
+    RETURN v_likes_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Toggle like state for a user on a mini museum and return current state and count.
+CREATE OR REPLACE FUNCTION toggle_mini_museum_like(
+    p_user_id INTEGER,
+    p_mini_museum_id INTEGER
+)
+RETURNS TABLE(liked BOOLEAN, likes_count INTEGER) AS $$
+DECLARE
+    v_inserted_count INTEGER;
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM mini_museums
+        WHERE mini_museum_id = p_mini_museum_id
+    ) THEN
+        RETURN;
+    END IF;
+
+    WITH inserted AS (
+        INSERT INTO mini_museum_likes (user_id, mini_museum_id)
+        VALUES (p_user_id, p_mini_museum_id)
+        ON CONFLICT (user_id, mini_museum_id) DO NOTHING
+        RETURNING 1
+    )
+    SELECT COUNT(*) INTO v_inserted_count FROM inserted;
+
+    IF v_inserted_count = 1 THEN
+        UPDATE mini_museums
+        SET likes_count = COALESCE(likes_count, 0) + 1
+        WHERE mini_museum_id = p_mini_museum_id
+        RETURNING mini_museums.likes_count INTO likes_count;
+
+        liked := TRUE;
+    ELSE
+        DELETE FROM mini_museum_likes
+        WHERE user_id = p_user_id
+          AND mini_museum_id = p_mini_museum_id;
+
+        UPDATE mini_museums
+        SET likes_count = GREATEST(COALESCE(likes_count, 0) - 1, 0)
+        WHERE mini_museum_id = p_mini_museum_id
+        RETURNING mini_museums.likes_count INTO likes_count;
+
+        liked := FALSE;
+    END IF;
+
+    RETURN NEXT;
+END;
+$$ LANGUAGE plpgsql;
 
 -- // triggers
 create or replace function check_duplicate_artifact() 
