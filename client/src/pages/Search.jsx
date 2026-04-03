@@ -8,7 +8,9 @@ import UserAvatarMenu from "../components/common/UserAvatarMenu";
 export default function Search() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [userRole, setUserRole] = useState(localStorage.getItem("role") || "curator");
+  const [userRole, setUserRole] = useState(
+    localStorage.getItem("role") || "curator",
+  );
   const [searching, setSearching] = useState(false);
 
   const [artifacts, setArtifacts] = useState([]);
@@ -172,7 +174,7 @@ export default function Search() {
         );
         setWishlist(updated);
       }
-    } catch (error) {
+    } catch {
       setPopMsg("An error occurred. Please try again.");
     } finally {
       setTimeout(() => setPopMsg(null), 3000);
@@ -289,17 +291,33 @@ export default function Search() {
               >
                 {userRole === "manager" ? (
                   <>
-                    <li><Link to="/manager-dashboard">Museum</Link></li>
-                    <li><Link to="/explore">Explore</Link></li>
-                    <li><Link to="/tours">Tours</Link></li>
-                    <li><Link to="/manager-quiz/new">Quiz</Link></li>
-                    <li><Link to="/search">Search</Link></li>
+                    <li>
+                      <Link to="/manager-dashboard">Museum</Link>
+                    </li>
+                    <li>
+                      <Link to="/explore">Explore</Link>
+                    </li>
+                    <li>
+                      <Link to="/tours">Tours</Link>
+                    </li>
+                    <li>
+                      <Link to="/manager-quiz/new">Quiz</Link>
+                    </li>
+                    <li>
+                      <Link to="/search">Search</Link>
+                    </li>
                   </>
                 ) : (
                   <>
-                    <li><Link to="/my-museums">My Museums</Link></li>
-                    <li><Link to="/explore">Explore</Link></li>
-                    <li><Link to="/profile">Profile</Link></li>
+                    <li>
+                      <Link to="/my-museums">My Museums</Link>
+                    </li>
+                    <li>
+                      <Link to="/explore">Explore</Link>
+                    </li>
+                    <li>
+                      <Link to="/profile">Profile</Link>
+                    </li>
                   </>
                 )}
               </ul>
@@ -310,17 +328,35 @@ export default function Search() {
             <ul className="menu menu-horizontal px-1 gap-5 text-white">
               {userRole === "manager" ? (
                 <>
-                  <li><Link to="/manager-dashboard">Museum</Link></li>
-                  <li><Link to="/explore">Explore</Link></li>
-                  <li><Link to="/tours">Tours</Link></li>
-                  <li><Link to="/manager-quiz/new">Quiz</Link></li>
-                  <li><Link to="/search" className="text-accent-yellow">Search</Link></li>
+                  <li>
+                    <Link to="/manager-dashboard">Museum</Link>
+                  </li>
+                  <li>
+                    <Link to="/explore">Explore</Link>
+                  </li>
+                  <li>
+                    <Link to="/tours">Tours</Link>
+                  </li>
+                  <li>
+                    <Link to="/manager-quiz/new">Quiz</Link>
+                  </li>
+                  <li>
+                    <Link to="/search" className="text-accent-yellow">
+                      Search
+                    </Link>
+                  </li>
                 </>
               ) : (
                 <>
-                  <li><Link to="/my-museums">My museums</Link></li>
-                  <li><Link to="/explore">Explore</Link></li>
-                  <li><Link to="/profile">Profile</Link></li>
+                  <li>
+                    <Link to="/my-museums">My museums</Link>
+                  </li>
+                  <li>
+                    <Link to="/explore">Explore</Link>
+                  </li>
+                  <li>
+                    <Link to="/profile">Profile</Link>
+                  </li>
                 </>
               )}
             </ul>
@@ -331,7 +367,7 @@ export default function Search() {
         </div>
 
         {/* --- Searchbar section --- */}
-        <div className="relative h-100 w-full">
+        <div className="relative h-100 w-full z-30 overflow-visible">
           <img
             src="https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?q=80&w=2070&auto=format&fit=crop"
             alt="bg-pic"
@@ -375,7 +411,7 @@ export default function Search() {
 
               {/* Suggestions Dropdown */}
               {showSugg && sugg.length > 0 && (
-                <div className="absolute top-full left-0 w-[calc(100%-110px)] mt-2 bg-white rounded-xl shadow-2xl z-20 overflow-hidden border border-stone-200 text-left">
+                <div className="absolute top-full left-0 w-[calc(100%-110px)] mt-2 bg-white rounded-xl shadow-2xl z-60 overflow-hidden border border-stone-200 text-left">
                   {sugg.map((item, index) => (
                     <div
                       key={index}

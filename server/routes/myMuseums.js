@@ -66,4 +66,44 @@ router.post("/", authorization, async (req, res) => {
     }
 });
 
+router.delete("/:id", authorization, async(req, res)=>{
+
+    const client = await pool.connect();
+    try {
+        if(req.user.role !== "curator"){
+            return res.status(403).json("Only Curator Authorized");
+        }
+            const mini_museum_id = Number(req.params.id);
+            const curator_id = req.user.id;
+
+            if (!Number.isInteger(mini_museum_id)) {
+                return res.status(400).json({ message: "Invalid mini museum id" });
+            }
+
+        await client.query("BEGIN");
+
+            const deletedMuseum = await client.query(
+            `DELETE FROM MINI_MUSEUMS
+                 WHERE MINI_MUSEUM_ID = $1 AND CURATOR_ID = $2
+                 RETURNING MINI_MUSEUM_ID`, 
+                 [mini_museum_id, curator_id]
+        );
+
+            if (deletedMuseum.rowCount === 0) {
+                await client.query("ROLLBACK");
+                return res.status(404).json({ message: "Mini museum not found" });
+            }
+
+        await client.query("COMMIT");
+        res.json({ message: "Mini Museum Deleted", mini_museum_id });
+    } catch (error) {
+        console.error(error.message);
+        await client.query("ROLLBACK");
+        res.status(500).json("Server Error");
+    }
+    finally{
+        client.release();
+    }
+});
+
 module.exports = router;

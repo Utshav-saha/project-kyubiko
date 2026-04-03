@@ -14,7 +14,7 @@ router.get("/authorize", authorization, async (req, res) => {
         let isOwner = false;
 
         const user = await pool.query(
-            `SELECT USERNAME, ROLE
+            `SELECT USERNAME, ROLE , AVATAR_URL
             FROM USERS 
             WHERE USER_ID = $1`, 
             [user_id]

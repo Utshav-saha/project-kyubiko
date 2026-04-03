@@ -25,6 +25,7 @@ export default function ViewMuseum() {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [isOwner, setIsOwner] = useState(false);
   const [role, setRole] = useState(null);
+  // const [avatarUrl, setAvatarUrl] = useState("");
 
   useEffect(() => {
     // fetch museum info
@@ -61,6 +62,7 @@ export default function ViewMuseum() {
             picture_url: data.miniMuseum.picture_url,
             user: data.user,
           });
+          // setAvatarUrl(data.user.avatar_url);
         }
 
         // error check if string, else array
@@ -281,7 +283,7 @@ export default function ViewMuseum() {
               </li>
             </ul>
           </div>
-          <div className="navbar-end gap-3 pr-6 relative z-[1100]">
+          <div className="navbar-end gap-3 pr-6 relative z-1100">
             <div className="hidden md:block bg-white/10 px-4 py-2 rounded-full">
               <span className="text-sm font-medium text-white">
                 {museumInfo.user?.username}
@@ -473,7 +475,7 @@ export default function ViewMuseum() {
       )}
       {/* Add Section */}
       {isAddSectionModalOpen && isOwner && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-dark-chocolate/60 backdrop-blur-sm"
             onClick={() => setIsAddSectionModalOpen(false)}
