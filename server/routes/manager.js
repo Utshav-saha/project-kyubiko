@@ -507,109 +507,92 @@ const res_loc_id = loc_res.rows[0].location_id;
 
 // edit museum infos
 router.put("/edit", authorization, async (req, res) => {
-	const client = await pool.connect();
-	try {
-		if (req.user?.role && req.user.role !== "manager") {
-			return res.status(403).json("Only Manager Authorized");
-		}
-		
-		const user_id = req.user?.id || req.user;
-		const managerMuseum = await get_museum
-		(user_id);	
-		if (!managerMuseum) {
-			return res.status(404).json({ error: "No museum assigned to this manager" });
-		}
+    const client = await pool.connect();
+    try {
+        if (req.user?.role && req.user.role !== "manager") {
+            return res.status(403).json("Only Manager Authorized");
+        }
+        
+        const user_id = req.user?.id || req.user;
+        const managerMuseum = await get_museum(user_id);    
+        if (!managerMuseum) {
+            return res.status(404).json({ error: "No museum assigned to this manager" });
+        }
 
-		const {
-			museum_name,
-			description,
-			picture_url,
-			location_id,
-			category,
-			open_days,
-			city,
-			country,
-			latitude,
-			longitude,
-		} = req.body;
+        const {museum_name,description,picture_url,category,open_days,city,country,latitude,longitude,} = req.body;
 
-		await client.query("BEGIN");
+        await client.query("BEGIN");
 
-		const current = await client.query(
-			`SELECT m.museum_name, m.description, m.picture_url, m.location_id, m.category, m.open_days,
-					COALESCE(l.city, '') AS city,
-					l.latitude,
-					l.longitude,
-					COALESCE(c.name, '') AS country
-			 FROM museums m
-			 LEFT JOIN locations l ON m.location_id = l.location_id
-			 LEFT JOIN country c ON l.country_id = c.country_id
-			 WHERE museum_id = $1
-			 AND manager_id = $2
-			 LIMIT 1`,
-			[managerMuseum.museum_id, user_id]
-		);
+        // current datas
+        const current = await client.query(
+            `SELECT m.museum_name, m.description, m.picture_url, m.location_id, m.category, m.open_days,
+                    COALESCE(l.city, '') AS city,
+                    l.latitude,
+                    l.longitude,
+                    COALESCE(c.name, '') AS country
+             FROM museums m
+             LEFT JOIN locations l ON m.location_id = l.location_id
+             LEFT JOIN country c ON l.country_id = c.country_id
+             WHERE museum_id = $1
+             AND manager_id = $2
+             LIMIT 1`,
+            [managerMuseum.museum_id, user_id]
+        );
 
-		if (current.rows.length === 0) {
-			await client.query("ROLLBACK");
-			return res.status(404).json({ error: "Museum not found for this manager" });
-		}
+        if (current.rows.length === 0) {
+            await client.query("ROLLBACK");
+            return res.status(404).json({ error: "Museum not found for this manager" });
+        }
 
-		const parsedLat = parseCoordinate(latitude ?? current.rows[0].latitude);
-		const parsedLon = parseCoordinate(longitude ?? current.rows[0].longitude);
+        const country_cng = country !== undefined && country.trim() !== current.rows[0].country;
+        const loc_id = country_cng ? null : current.rows[0].location_id;
 
-		const loc_res = await client.query(
-    	`SELECT get_location_id($1, $2, $3, $4, $5) AS location_id`,
-    	[
-		null,
-        city ?? current.rows[0].city,
-        country ?? current.rows[0].country,
-        parsedLat,
-        parsedLon
-    	]
-		);
-		const res_loc_id = loc_res.rows[0].location_id;
+        const updated_city = city !== undefined ? city : current.rows[0].city;
+        const updated_country = country !== undefined ? country : current.rows[0].country;
+        
+        const updated_lat = latitude !== undefined ? parseCoordinate(latitude) : current.rows[0].latitude;
+        const updated_long = longitude !== undefined ? parseCoordinate(longitude) : current.rows[0].longitude;
 
-		if (!res_loc_id) {
-			await client.query("ROLLBACK");
-			return res.status(400).json({ error: "City and country are required" });
-		}
+        const loc_res = await client.query(
+            `SELECT get_location_id($1, $2, $3, $4, $5) AS location_id`,
+            [loc_id,updated_city,updated_country,updated_lat,updated_long]
+        );
+        const res_loc_id = loc_res.rows[0].location_id;
 
-		if (picture_url && picture_url !== current.rows[0].picture_url && current.rows[0].picture_url) {
-			await delete_clound(current.rows[0].picture_url);
-		}
+        if (!res_loc_id) {
+            await client.query("ROLLBACK");
+            return res.status(400).json({ error: "City and country are required" });
+        }
 
-		const updated = await client.query(
-			`UPDATE museums
-			 SET museum_name = $1, description = $2, picture_url = $3, location_id = $4, category = $5, open_days = $6 
-			 WHERE museum_id = $7 AND manager_id = $8
-			 RETURNING museum_id`,
-			[
-				museum_name ?? current.rows[0].museum_name,
-				description ?? current.rows[0].description,
-				picture_url ?? current.rows[0].picture_url,
-				res_loc_id,
-				category ?? current.rows[0].category,
-				open_days ?? current.rows[0].open_days,
-				managerMuseum.museum_id,
-				user_id
-			]
-		);
+        // delete old image if changed
+        if (picture_url && picture_url !== current.rows[0].picture_url && current.rows[0].picture_url) {
+            await delete_clound(current.rows[0].picture_url);
+        }
 
-		if (updated.rows.length === 0) {
-			await client.query("ROLLBACK");
-			return res.status(404).json({ error: "Museum not found" });
-		}
+        // update main museum
+        const updated = await client.query(
+            `UPDATE museums
+             SET museum_name = $1, description = $2, picture_url = $3, location_id = $4, category = $5, open_days = $6 
+             WHERE museum_id = $7 AND manager_id = $8
+             RETURNING museum_id`,
+            [museum_name ?? current.rows[0].museum_name,description ?? current.rows[0].description,picture_url ?? current.rows[0].picture_url,
+                res_loc_id, category ?? current.rows[0].category,open_days ?? current.rows[0].open_days,
+                managerMuseum.museum_id,user_id]
+        );
 
-		await client.query("COMMIT");
-		res.json({ msg: "Museum updated" });
-	} catch (error) {
-		await client.query("ROLLBACK");
-		res.status(500).json({ error: error.message });
-	} finally {
-		client.release();
-	}
+        if (updated.rows.length === 0) {
+            await client.query("ROLLBACK");
+            return res.status(404).json({ error: "Museum not found" });
+        }
+
+        await client.query("COMMIT");
+        res.json({ msg: "Museum updated" });
+    } catch (error) {
+        await client.query("ROLLBACK");
+        res.status(500).json({ error: error.message });
+    } finally {
+        client.release();
+    }
 });
-
 
 module.exports = router;
