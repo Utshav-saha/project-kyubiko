@@ -561,7 +561,7 @@ router.put("/edit", authorization, async (req, res) => {
 		const loc_res = await client.query(
     	`SELECT get_location_id($1, $2, $3, $4, $5) AS location_id`,
     	[
-        location_id ?? current.rows[0].location_id,
+		null,
         city ?? current.rows[0].city,
         country ?? current.rows[0].country,
         parsedLat,

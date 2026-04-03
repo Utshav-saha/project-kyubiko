@@ -641,36 +641,14 @@ router.post("/time-slot", authorization, async (req, res) => {
 
 		await client.query("BEGIN");
 
-			let tourRes = await client.query(
-				`SELECT tour_id
-				 FROM tours
-				 WHERE museum_id = $1
-				 AND tour_date = $2
-				 ORDER BY tour_id ASC
-				 LIMIT 1`,
-				[museum.museum_id, tour_date]
-			);
+		const inserted = await client.query(
+			`INSERT INTO tours (tour_title, price, tour_date, museum_id)
+			 VALUES ($1, $2, $3, $4)
+			 RETURNING tour_id`,
+			[tour_title, parsedPrice, tour_date, museum.museum_id]
+		);
 
-		let tourId;
-		if (tourRes.rows.length === 0) {
-			const inserted = await client.query(
-				`INSERT INTO tours (tour_title, price, tour_date, museum_id)
-				 VALUES ($1, $2, $3, $4)
-				 RETURNING tour_id`,
-				[tour_title, parsedPrice, tour_date, museum.museum_id]
-			);
-			tourId = inserted.rows[0].tour_id;
-			} else {
-			tourId = tourRes.rows[0].tour_id;
-			await client.query(
-				`UPDATE tours
-				 SET tour_title = $1,
-						 price = $2,
-							 tour_date = $3
-				 WHERE tour_id = $4`,
-				[tour_title, parsedPrice, tour_date, tourId]
-			);
-		}
+		const tourId = inserted.rows[0].tour_id;
 
 		const slot = await client.query(
 			`INSERT INTO time_slots (start_time, end_time, capacity, total_bookings, slot_color, tour_id)
