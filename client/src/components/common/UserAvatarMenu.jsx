@@ -17,9 +17,16 @@ export default function UserAvatarMenu({ user, logoutOnly = false }) {
 
   return (
     <div className="dropdown dropdown-end">
-      <div tabIndex={0} role="button" className="avatar avatar-online cursor-pointer">
+      <div
+        tabIndex={0}
+        role="button"
+        className="avatar avatar-online cursor-pointer"
+      >
         <div className="w-12 rounded-full border border-white/20">
-          <img src={user?.avatar_url || "https://placehold.co/150"} alt="User Avatar" />
+          <img
+            src={user?.avatar_url || "https://placehold.co/150"}
+            alt="User Avatar"
+          />
         </div>
       </div>
 
@@ -32,27 +39,23 @@ export default function UserAvatarMenu({ user, logoutOnly = false }) {
             <User size={18} className="text-dark-chocolate" />
           </div>
           <div>
-            <p className="font-bold text-dark-chocolate text-sm">{user?.username || "Curator"}</p>
-            <p className="text-xs uppercase tracking-wider text-dark-chocolate/60">{role}</p>
+            <p className="font-bold text-dark-chocolate text-sm">
+              {user?.username || "Curator"}
+            </p>
+            <p className="text-xs uppercase tracking-wider text-dark-chocolate/60">
+              {role}
+            </p>
           </div>
         </div>
 
         <div className="pt-3 space-y-2">
           {!logoutOnly && (
-            <>
-              <Link
-                to="/profile"
-                className="btn btn-sm w-full bg-dark-chocolate text-white hover:bg-accent-orange border-none"
-              >
-                Go to Profile
-              </Link>
-              <Link
-                to="/my-museums"
-                className="btn btn-sm w-full bg-white text-dark-chocolate border border-dark-chocolate/20 hover:bg-old-paper"
-              >
-                My Museums
-              </Link>
-            </>
+            <Link
+              to="/profile"
+              className="btn btn-sm w-full bg-dark-chocolate text-white hover:bg-accent-orange border-none"
+            >
+              Go to Profile
+            </Link>
           )}
 
           <button

@@ -361,7 +361,7 @@ export default function ManagerDashboard() {
               {user?.username}
             </span>
           </div>
-          <UserAvatarMenu user={user} logoutOnly={true} />
+          <UserAvatarMenu user={user} />
         </div>
       </div>
 

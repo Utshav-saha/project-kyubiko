@@ -332,7 +332,7 @@ export default function ManagerQuiz() {
               {user?.username}
             </span>
           </div>
-          <UserAvatarMenu user={user} logoutOnly={true} />
+          <UserAvatarMenu user={user} />
         </div>
       </div>
 
