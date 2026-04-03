@@ -281,39 +281,88 @@ router.post("/:quizId/complete", authorization, async (req, res) => {
 
 		const quizId = req.params.quizId;
 		const userId = getUserId(req);
-		const score = Number(req.body.score || 0);
+		const totalPoints = Number(req.body.total_points ?? req.body.score ?? 0);
 		const elapsedSeconds = Number(req.body.elapsedSeconds || 0);
-		const completionTime = Number((elapsedSeconds / 60).toFixed(2));
+		const completionTime = Number(Math.max(0, elapsedSeconds).toFixed(2));
+
+		const pointsColumnRes = await client.query(
+			`SELECT column_name
+			 FROM information_schema.columns
+			 WHERE table_schema = 'public'
+			   AND table_name = 'user_quiz'
+			   AND column_name IN ('total_points', 'score')`
+		);
+
+		const availableColumns = new Set(
+			pointsColumnRes.rows.map((row) => String(row.column_name || "").toLowerCase())
+		);
+
+		const pointsColumn = availableColumns.has("total_points")
+			? "total_points"
+			: availableColumns.has("score")
+				? "score"
+				: null;
+
+		if (!pointsColumn) {
+			throw new Error("No points column found in user_quiz");
+		}
 
 		await client.query("BEGIN");
 
 		const existing = await client.query(
-			`SELECT user_quiz_id, total_attempts
+			`SELECT user_quiz_id,
+					COALESCE(total_attempts, 0) AS total_attempts,
+					COALESCE(${pointsColumn}, 0) AS saved_points,
+					completion_time
 			 FROM user_quiz
 			 WHERE user_id = $1 AND quiz_id = $2
+			 ORDER BY COALESCE(${pointsColumn}, 0) DESC,
+					  COALESCE(completion_time, 999999) ASC,
+					  user_quiz_id DESC
 			 LIMIT 1`,
 			[userId, quizId]
 		);
 
 		if (existing.rows.length === 0) {
 			await client.query(
-				`INSERT INTO user_quiz (score, completion_time, total_attempts, user_id, quiz_id)
+				`INSERT INTO user_quiz (${pointsColumn}, completion_time, total_attempts, user_id, quiz_id)
 				 VALUES ($1, $2, 1, $3, $4)`,
-				[score, completionTime, userId, quizId]
+				[totalPoints, completionTime, userId, quizId]
 			);
 		} else {
-			await client.query(
-				`UPDATE user_quiz
-				 SET score = $1,
-					 completion_time = $2,
-					 total_attempts = COALESCE(total_attempts, 0) + 1
-				 WHERE user_quiz_id = $3`,
-				[score, completionTime, existing.rows[0].user_quiz_id]
-			);
+			const currentBest = existing.rows[0];
+			const savedPoints = Number(currentBest.saved_points) || 0;
+			const savedTimeRaw = Number(currentBest.completion_time);
+			const savedTime = Number.isFinite(savedTimeRaw) && savedTimeRaw > 0
+				? savedTimeRaw
+				: Number.MAX_SAFE_INTEGER;
+			const candidateTime = completionTime > 0 ? completionTime : Number.MAX_SAFE_INTEGER;
+
+			const isBetterAttempt =
+				totalPoints > savedPoints ||
+				(totalPoints === savedPoints && candidateTime < savedTime);
+
+			if (isBetterAttempt) {
+				await client.query(
+					`UPDATE user_quiz
+					 SET ${pointsColumn} = $1,
+						 completion_time = $2,
+						 total_attempts = COALESCE(total_attempts, 0) + 1
+					 WHERE user_quiz_id = $3`,
+					[totalPoints, completionTime, currentBest.user_quiz_id]
+				);
+			} else {
+				await client.query(
+					`UPDATE user_quiz
+					 SET total_attempts = COALESCE(total_attempts, 0) + 1
+					 WHERE user_quiz_id = $1`,
+					[currentBest.user_quiz_id]
+				);
+			}
 		}
 
 		await client.query("COMMIT");
-		res.json({ msg: "Quiz attempt saved" });
+		res.json({ msg: "Quiz attempt processed" });
 	} catch (error) {
 		await client.query("ROLLBACK");
 		console.error(error.message);

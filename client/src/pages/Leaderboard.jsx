@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Trophy, ChevronDown } from "lucide-react";
 import UserAvatarMenu from "../components/common/UserAvatarMenu";
+import { API_URL } from "../config";
 
 const rankSuffix = (rank) => {
   if (rank % 100 >= 11 && rank % 100 <= 13) return `${rank}th`;
@@ -13,21 +14,41 @@ const rankSuffix = (rank) => {
 
 const avatarFallback = (username = "U") => username.charAt(0).toUpperCase();
 
-const createDummyLeaderboard = () => {
-  const names = [
-    "Ava", "Liam", "Noah", "Emma", "Mason", "Olivia", "Ethan", "Mia", "Lucas", "Sophia",
-    "Elijah", "Amelia", "James", "Harper", "Henry", "Evelyn", "Alexander", "Abigail", "Benjamin", "Ella",
-  ];
+const isPlaceholderCurator = (username = "") => {
+  const match = String(username).match(/^Curator\s+(\d+)$/i);
+  if (!match) return false;
+  const numericRank = Number(match[1]);
+  return Number.isFinite(numericRank) && numericRank >= 2 && numericRank <= 100;
+};
 
-  return Array.from({ length: 100 }, (_, i) => {
-    const points = i <= 1 ? 980 : Math.max(120, 970 - i * 7);
-    return {
-      user_id: i + 1,
-      username: `${names[i % names.length]} ${i + 1}`,
-      avatar_url: "",
-      points,
-    };
-  });
+const resolveEntryPoints = (entry) => {
+  if (isPlaceholderCurator(entry?.username)) return 0;
+  return Number(entry?.points) || 0;
+};
+
+const resolveEntryCompletionSeconds = (entry) => {
+  if (isPlaceholderCurator(entry?.username)) {
+    const match = String(entry.username).match(/^Curator\s+(\d+)$/i);
+    const rankNumber = Number(match?.[1] || 4);
+    return rankNumber + 6;
+  }
+
+  const numeric = Number(entry?.completion_time);
+  if (!Number.isFinite(numeric) || numeric <= 0) return 0;
+
+  // Backward compatibility for previously persisted minute values.
+  if (numeric < 5) return Number((numeric * 60).toFixed(2));
+
+  return numeric;
+};
+
+const formatCompletionTime = (timeValue) => {
+  const numeric = Number(timeValue);
+  const safeSeconds = Number.isFinite(numeric) && numeric >= 0 ? numeric : 0;
+  const roundedTotal = Math.round(safeSeconds);
+  const minutes = Math.floor(roundedTotal / 60);
+  const seconds = String(roundedTotal % 60).padStart(2, "0");
+  return `${minutes} m ${seconds} s`;
 };
 
 export default function Leaderboard() {
@@ -55,51 +76,41 @@ export default function Leaderboard() {
           navigate("/login");
           return;
         }
-        
-        setUser({ username });
 
-        /*
-         * Live leaderboard API is temporarily disabled until real quiz data is ready.
-         * Keeping this code commented (not deleted) for easy re-enable later.
-         *
-         * const authRes = await fetch(`${API_URL}/museum/authorize`, {
-         *   method: "GET",
-         *   headers: { token },
-         * });
-         *
-         * if (!authRes.ok) {
-         *   localStorage.removeItem("token");
-         *   localStorage.removeItem("role");
-         *   navigate("/login");
-         *   return;
-         * }
-         *
-         * const authData = await authRes.json();
-         * setUser(authData.user);
-         *
-         * const boardRes = await fetch(`${API_URL}/leaderboard/${id}`, {
-         *   method: "GET",
-         *   headers: { token },
-         * });
-         *
-         * if (!boardRes.ok) throw new Error("Could not fetch leaderboard");
-         *
-         * const boardData = await boardRes.json();
-         * setMuseumName(boardData.museum_name || "Museum");
-         * setParticipants(boardData.total_eager_minds_participated || 0);
-         * setEntries(boardData.leaderboard || []);
-         */
+        const authRes = await fetch(`${API_URL}/explore/authorize`, {
+          method: "GET",
+          headers: { token },
+        });
 
-        const dummyEntries = createDummyLeaderboard();
-        setMuseumName(`Museum ${id}`);
-        setParticipants(dummyEntries.length);
-        setEntries(dummyEntries);
+        if (!authRes.ok) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("role");
+          navigate("/login");
+          return;
+        }
+
+        const authData = await authRes.json();
+        setUser(authData.user || { username });
+
+        const boardRes = await fetch(`${API_URL}/leaderboard/${id}`, {
+          method: "GET",
+          headers: { token },
+        });
+
+        if (!boardRes.ok) {
+          throw new Error("Could not fetch leaderboard");
+        }
+
+        const boardData = await boardRes.json();
+        setMuseumName(boardData.museum_name || "Museum");
+        setParticipants(Number(boardData.total_eager_minds_participated) || 0);
+        setEntries(Array.isArray(boardData.leaderboard) ? boardData.leaderboard : []);
       } catch (error) {
         console.error(error.message);
-        const dummyEntries = createDummyLeaderboard();
-        setMuseumName(`Museum ${id}`);
-        setParticipants(dummyEntries.length);
-        setEntries(dummyEntries);
+        setUser((prev) => prev || { username: localStorage.getItem("username") || "Curator" });
+        setMuseumName("Museum");
+        setParticipants(0);
+        setEntries([]);
       } finally {
         setLoading(false);
       }
@@ -112,12 +123,24 @@ export default function Leaderboard() {
     let currentRank = 1;
 
     return (entries || []).map((entry, index, arr) => {
-      if (index > 0 && entry.points !== arr[index - 1].points) {
+      const currentPoints = resolveEntryPoints(entry);
+      const prevPoints = index > 0 ? resolveEntryPoints(arr[index - 1]) : 0;
+      const currentTime = resolveEntryCompletionSeconds(entry);
+      const prevTime = index > 0 ? resolveEntryCompletionSeconds(arr[index - 1]) : 0;
+
+      if (
+        index > 0 && (
+          currentPoints !== prevPoints ||
+          currentTime !== prevTime
+        )
+      ) {
         currentRank = index + 1;
       }
 
       return {
         ...entry,
+        points: currentPoints,
+        completion_time: currentTime,
         rank: currentRank,
         rankLabel: rankSuffix(currentRank),
       };
@@ -172,7 +195,8 @@ export default function Leaderboard() {
         </div>
 
         <p className={`font-playfair font-bold text-dark-chocolate ${big ? "text-2xl" : "text-xl"}`}>{entry.username}</p>
-        <p className="text-sm text-dark-chocolate/70">{entry.points} pts</p>
+        <p className="text-sm text-dark-chocolate/70">{resolveEntryPoints(entry)} pts</p>
+        <p className="text-xs text-dark-chocolate/60">Time: {formatCompletionTime(entry.completion_time)}</p>
       </div>
     );
   };
@@ -270,11 +294,14 @@ export default function Leaderboard() {
                       avatarFallback(entry.username)
                     )}
                   </div>
-                  <p className="font-medium truncate">{entry.username}</p>
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{entry.username}</p>
+                    <p className="text-xs text-dark-chocolate/60">Time: {formatCompletionTime(entry.completion_time)}</p>
+                  </div>
                 </div>
 
                 <div className="px-3 py-1.5 rounded-lg bg-[#205b3e] text-white text-sm font-bold whitespace-nowrap">
-                  {entry.points} pts
+                  {resolveEntryPoints(entry)} pts
                 </div>
               </div>
             ))}

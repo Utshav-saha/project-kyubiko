@@ -134,6 +134,7 @@ export default function Question() {
             token,
           },
           body: JSON.stringify({
+            total_points: nextScore,
             score: nextScore,
             elapsedSeconds,
           }),
