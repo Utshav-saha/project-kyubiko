@@ -264,24 +264,6 @@ INSERT INTO bookings (ticket_code, user_id, tour_id, time_slot_id)
 VALUES
 ('TESTTICKET123', 2, 1, 1);
 
-CREATE TABLE artifacts_views (
-    artifact_view_id SERIAL,
-    view_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    user_id INTEGER,
-    artifact_id INTEGER,
-    
-    CONSTRAINT artifacts_views_pkey PRIMARY KEY (artifact_view_id),
-    
-    CONSTRAINT artifacts_views_user_id_fkey 
-        FOREIGN KEY (user_id) 
-        REFERENCES users (user_id) 
-        ON DELETE CASCADE,
-        
-    CONSTRAINT artifacts_views_artifact_id_fkey 
-        FOREIGN KEY (artifact_id) 
-        REFERENCES artifacts (artifact_id) 
-        ON DELETE CASCADE
-);
 
 
 
@@ -306,69 +288,7 @@ CREATE TABLE museum_daily_stats (
     UNIQUE(museum_id, stat_date)
 );
 
--- Increment likes on a mini museum and return the updated count.
-CREATE OR REPLACE FUNCTION increment_mini_museum_likes(p_mini_museum_id INTEGER)
-RETURNS INTEGER AS $$
-DECLARE
-    v_likes_count INTEGER;
-BEGIN
-    UPDATE mini_museums
-    SET likes_count = COALESCE(likes_count, 0) + 1
-    WHERE mini_museum_id = p_mini_museum_id
-    RETURNING likes_count INTO v_likes_count;
 
-    RETURN v_likes_count;
-END;
-$$ LANGUAGE plpgsql;
-
--- Toggle like state for a user on a mini museum and return current state and count.
-CREATE OR REPLACE FUNCTION toggle_mini_museum_like(
-    p_user_id INTEGER,
-    p_mini_museum_id INTEGER
-)
-RETURNS TABLE(liked BOOLEAN, likes_count INTEGER) AS $$
-DECLARE
-    v_inserted_count INTEGER;
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM mini_museums
-        WHERE mini_museum_id = p_mini_museum_id
-    ) THEN
-        RETURN;
-    END IF;
-
-    WITH inserted AS (
-        INSERT INTO mini_museum_likes (user_id, mini_museum_id)
-        VALUES (p_user_id, p_mini_museum_id)
-        ON CONFLICT (user_id, mini_museum_id) DO NOTHING
-        RETURNING 1
-    )
-    SELECT COUNT(*) INTO v_inserted_count FROM inserted;
-
-    IF v_inserted_count = 1 THEN
-        UPDATE mini_museums
-        SET likes_count = COALESCE(likes_count, 0) + 1
-        WHERE mini_museum_id = p_mini_museum_id
-        RETURNING mini_museums.likes_count INTO likes_count;
-
-        liked := TRUE;
-    ELSE
-        DELETE FROM mini_museum_likes
-        WHERE user_id = p_user_id
-          AND mini_museum_id = p_mini_museum_id;
-
-        UPDATE mini_museums
-        SET likes_count = GREATEST(COALESCE(likes_count, 0) - 1, 0)
-        WHERE mini_museum_id = p_mini_museum_id
-        RETURNING mini_museums.likes_count INTO likes_count;
-
-        liked := FALSE;
-    END IF;
-
-    RETURN NEXT;
-END;
-$$ LANGUAGE plpgsql;
 
 -- // triggers
 create or replace function check_duplicate_artifact() 
@@ -381,7 +301,8 @@ begin
         and creator = new.creator
         and origin = new.origin
     ) then
-    
+
+--// return null = skip 
         return null;
     end if;
 
@@ -394,7 +315,7 @@ before insert on artifacts
 for each row
 execute function check_duplicate_artifact();
 
--- artifact view count trigger - 1 for each users unique view
+-- artifact view count trigger = 1 for each users view
 create or replace function increment_count()
 returns trigger as $$
 begin
@@ -557,19 +478,6 @@ end;
 $$ language plpgsql
 
 
-create or replace function get_position(p_museum_id integer)
-returns integer as $$
-declare
-    max_position integer;
-begin
-    select max(position) into max_position
-    from sections
-    where mini_museum_id = p_museum_id;
-    return coalesce(max_position, 0) + 1;
-end;
-$$ language plpgsql;
-
-
 create or replace function get_location_id(
     p_location_id integer,
     p_city varchar,
@@ -582,8 +490,14 @@ declare
     v_country_id integer;
     v_location_id integer;
 begin
-
+    -- overwrite the existing data
     if p_location_id is not null then
+        update locations
+        set city = trim(p_city),
+            latitude = p_latitude,
+            longitude = p_longitude
+        where location_id = p_location_id;
+        
         return p_location_id;
     end if;
 
@@ -591,7 +505,7 @@ begin
         return null;
     end if;
 
-    --  check country
+    -- find or create the new country
     select country_id into v_country_id 
     from country 
     where lower(name) = lower(trim(p_country)) 
@@ -603,31 +517,78 @@ begin
         returning country_id into v_country_id;
     end if;
 
-    --  check city
-    select location_id into v_location_id 
-    from locations 
-    where lower(city) = lower(trim(p_city)) 
-    and country_id = v_country_id 
-    limit 1;
+    -- 3. insert location row 
+    insert into locations (city, latitude, longitude, country_id)
+    values (trim(p_city), p_latitude, p_longitude, v_country_id)
+    returning location_id into v_location_id;
 
-    if v_location_id is not null then
-        -- update coordinates 
-        update locations
-        set latitude = coalesce(p_latitude, latitude),
-            longitude = coalesce(p_longitude, longitude)
-        where location_id = v_location_id;
-        
-        return v_location_id;
-    else
-        -- insert new 
-        insert into locations (city, latitude, longitude, country_id)
-        values (trim(p_city), p_latitude, p_longitude, v_country_id)
-        returning location_id into v_location_id;
-    
-        return v_location_id;
-    end if;
+    return v_location_id;
 end;
 $$ language plpgsql;
+
+-- Increment likes on a mini museum and return the updated count.
+CREATE OR REPLACE FUNCTION increment_mini_museum_likes(p_mini_museum_id INTEGER)
+RETURNS INTEGER AS $$
+DECLARE
+    v_likes_count INTEGER;
+BEGIN
+    UPDATE mini_museums
+    SET likes_count = COALESCE(likes_count, 0) + 1
+    WHERE mini_museum_id = p_mini_museum_id
+    RETURNING likes_count INTO v_likes_count;
+
+    RETURN v_likes_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Toggle like state for a user on a mini museum and return current state and count.
+CREATE OR REPLACE FUNCTION toggle_mini_museum_like(
+    p_user_id INTEGER,
+    p_mini_museum_id INTEGER
+)
+RETURNS TABLE(liked BOOLEAN, likes_count INTEGER) AS $$
+DECLARE
+    v_inserted_count INTEGER;
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM mini_museums
+        WHERE mini_museum_id = p_mini_museum_id
+    ) THEN
+        RETURN;
+    END IF;
+
+    WITH inserted AS (
+        INSERT INTO mini_museum_likes (user_id, mini_museum_id)
+        VALUES (p_user_id, p_mini_museum_id)
+        ON CONFLICT (user_id, mini_museum_id) DO NOTHING
+        RETURNING 1
+    )
+    SELECT COUNT(*) INTO v_inserted_count FROM inserted;
+
+    IF v_inserted_count = 1 THEN
+        UPDATE mini_museums
+        SET likes_count = COALESCE(likes_count, 0) + 1
+        WHERE mini_museum_id = p_mini_museum_id
+        RETURNING mini_museums.likes_count INTO likes_count;
+
+        liked := TRUE;
+    ELSE
+        DELETE FROM mini_museum_likes
+        WHERE user_id = p_user_id
+          AND mini_museum_id = p_mini_museum_id;
+
+        UPDATE mini_museums
+        SET likes_count = GREATEST(COALESCE(likes_count, 0) - 1, 0)
+        WHERE mini_museum_id = p_mini_museum_id
+        RETURNING mini_museums.likes_count INTO likes_count;
+
+        liked := FALSE;
+    END IF;
+
+    RETURN NEXT;
+END;
+$$ LANGUAGE plpgsql;
 
 
 // -- procedures
@@ -663,6 +624,18 @@ $$ language plpgsql;
 
 
 // -- complex queries
+
+
+// -- top 4 artifacts
+SELECT a.artifact_id, a.artifact_name, a.description, a.creator, a.time_period,
+             a.picture_url, a.acquisition_date, a.origin, m.museum_name , c.category_name
+             FROM artifacts a
+             JOIN museums m ON a.museum_id = m.museum_id
+             JOIN categories c on a.category_id = c.category_id
+             ORDER BY a.artifact_views DESC
+             LIMIT 4;
+
+
 
 -- fetch data for mini museums with sections and artifacts
 select 

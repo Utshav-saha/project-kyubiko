@@ -262,7 +262,7 @@ export default function Search() {
         <div className="fixed inset-0 z-10 pointer-events-none opacity-15 bg-noise mix-blend-multiply"></div>
 
         {/* --- Navbar --- */}
-        <div className="navbar shadow-sm z-20 bg-dark-chocolate relative">
+        <div className="navbar shadow-sm z-50 bg-dark-chocolate relative">
           <div className="navbar-start">
             <div className="dropdown">
               <div

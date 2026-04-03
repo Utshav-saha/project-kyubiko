@@ -299,11 +299,7 @@ export default function ManagerDashboard() {
 
   return (
     <div className="min-h-screen bg-old-paper font-dmsans text-dark-chocolate relative pb-20">
-      <datalist id="cities-list">
-        {locationsList.cities.map((city, idx) => (
-          <option key={idx} value={city} />
-        ))}
-      </datalist>
+      
       <datalist id="countries-list">
         {locationsList.countries.map((country, idx) => (
           <option key={idx} value={country} />
@@ -754,7 +750,6 @@ export default function ManagerDashboard() {
                     City
                   </label>
                   <input
-                    list="cities-list"
                     type="text"
                     value={museumForm.city || ""}
                     onChange={(e) =>

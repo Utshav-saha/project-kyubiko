@@ -83,11 +83,19 @@ export default function Login() {
         ? `${API_URL}/auth/register`
         : `${API_URL}/auth/login`;
 
+    const payload =
+      action === "Create an Account"
+        ? data
+        : {
+            email: data.email,
+            pass: data.pass,
+          };
+
     try {
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       const parseRes = await response.json();
@@ -210,16 +218,18 @@ export default function Login() {
                 className="w-full p-2 bg-[rgba(255,152,89,0.1)] rounded"
               />
             </div>
-            <div>
-              <input
-                type="password"
-                placeholder="Confirm Password"
-                name="confirmPass"
-                value={data.confirmPass}
-                onChange={handleChange}
-                className="w-full p-2 bg-[rgba(255,152,89,0.1)] rounded"
-              />
-            </div>
+            {action === "Create an Account" ? (
+              <div>
+                <input
+                  type="password"
+                  placeholder="Confirm Password"
+                  name="confirmPass"
+                  value={data.confirmPass}
+                  onChange={handleChange}
+                  className="w-full p-2 bg-[rgba(255,152,89,0.1)] rounded"
+                />
+              </div>
+            ) : null}
 
             {action === "Login" ? (
               <div></div>
