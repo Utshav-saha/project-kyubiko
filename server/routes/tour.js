@@ -812,49 +812,6 @@ router.get("/revenue/:timeSlotId", authorization, async (req, res) => {
 		if (!ensureManager(req, res)) return;
 
 		const slotId = Number(req.params.timeSlotId);
-
-router.get("/revenue-total", authorization, async (req, res) => {
-	try {
-		if (!ensureManager(req, res)) return;
-
-		const userId = getUserId(req);
-		const museum = await getManagerMuseum(userId);
-		if (!museum) {
-			return res.status(404).json({ error: "No museum assigned to this manager" });
-		}
-
-		const rows = await pool.query(
-			`SELECT
-				ts.time_slot_id,
-				COALESCE(ts.total_bookings, 0) AS total_bookings,
-				COALESCE(bk.bookings_count, 0) AS bookings_count,
-				COALESCE(t.price, 0) AS price
-			 FROM time_slots ts
-			 JOIN tours t ON t.tour_id = ts.tour_id
-			 LEFT JOIN (
-				 SELECT time_slot_id, COUNT(*)::int AS bookings_count
-				 FROM bookings
-				 GROUP BY time_slot_id
-			 ) bk ON bk.time_slot_id = ts.time_slot_id
-			 WHERE t.museum_id = $1`,
-			[museum.museum_id]
-		);
-
-		const totalRevenue = rows.rows.reduce((sum, row) => {
-			const booked = Math.max(Number(row.total_bookings || 0), Number(row.bookings_count || 0));
-			const price = Number(row.price || 0);
-			return sum + (booked * price);
-		}, 0);
-
-		res.json({
-			museum_id: museum.museum_id,
-			total_revenue: Number(totalRevenue.toFixed(2)),
-			currency: "USD",
-		});
-	} catch (error) {
-		res.status(500).json({ error: error.message });
-	}
-});
 		if (!slotId) return res.status(400).json({ error: "Invalid time slot id" });
 
 		const userId = getUserId(req);
@@ -887,6 +844,49 @@ router.get("/revenue-total", authorization, async (req, res) => {
 		const revenue = Number((bookings * Number(slot.price || 0)).toFixed(2));
 
 		res.json({ time_slot_id: slot.time_slot_id, revenue, currency: "USD" });
+	} catch (error) {
+		res.status(500).json({ error: error.message });
+	}
+});
+
+router.get("/revenue-total", authorization, async (req, res) => {
+	try {
+		if (!ensureManager(req, res)) return;
+
+		const userId = getUserId(req);
+		const museum = await getManagerMuseum(userId);
+		if (!museum) {
+			return res.status(404).json({ error: "No museum assigned to this manager" });
+		}
+
+		const rows = await pool.query(
+			`SELECT
+				ts.time_slot_id,
+				COALESCE(ts.total_bookings, 0) AS total_bookings,
+				COALESCE(bk.bookings_count, 0) AS bookings_count,
+				COALESCE(t.price, 0) AS price
+			 FROM time_slots ts
+			 JOIN tours t ON t.tour_id = ts.tour_id
+			 LEFT JOIN (
+				 SELECT time_slot_id, COUNT(*)::int AS bookings_count
+				 FROM bookings
+				 GROUP BY time_slot_id
+			 ) bk ON bk.time_slot_id = ts.time_slot_id
+			 WHERE t.museum_id = $1`,
+			[museum.museum_id]
+		);
+
+		const totalRevenue = rows.rows.reduce((sum, row) => {
+			const booked = Math.max(Number(row.total_bookings || 0), Number(row.bookings_count || 0));
+			const price = Number(row.price || 0);
+			return sum + booked * price;
+		}, 0);
+
+		res.json({
+			museum_id: museum.museum_id,
+			total_revenue: Number(totalRevenue.toFixed(2)),
+			currency: "USD",
+		});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}

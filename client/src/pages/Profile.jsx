@@ -20,6 +20,7 @@ export default function Profile() {
   });
   const [quizResults, setQuizResults] = useState([]);
   const [wishlist, setWishlist] = useState([]);
+  const [tourTickets, setTourTickets] = useState([]);
   const [userRole, setUserRole] = useState("curator");
   const [popMsg, setPopMsg] = useState(null);
 
@@ -63,6 +64,7 @@ export default function Profile() {
         overviewRes,
         quizRes,
         wishlistRes,
+        ticketsRes,
       ] = await Promise.all([
         fetch(`${API_URL}/profile/suggestions`, {
           method: "GET",
@@ -81,6 +83,10 @@ export default function Profile() {
           headers: { token },
         }),
         fetch(`${API_URL}/view/wishlist`, {
+          method: "GET",
+          headers: { token },
+        }),
+        fetch(`${API_URL}/tour/my-bookings`, {
           method: "GET",
           headers: { token },
         }),
@@ -103,6 +109,7 @@ export default function Profile() {
           };
       const quizData = quizRes.ok ? await quizRes.json() : { results: [] };
       const wishlistData = wishlistRes.ok ? await wishlistRes.json() : [];
+      const ticketsData = ticketsRes.ok ? await ticketsRes.json() : [];
 
       setSuggestions(suggestionsData?.suggestions || []);
       setAchievements(achievementsData?.achievements || []);
@@ -115,6 +122,7 @@ export default function Profile() {
       );
       setQuizResults(quizData?.results || []);
       setWishlist(Array.isArray(wishlistData) ? wishlistData : []);
+      setTourTickets(Array.isArray(ticketsData) ? ticketsData : []);
     } catch (error) {
       console.error(error.message);
     } finally {
@@ -181,14 +189,14 @@ export default function Profile() {
         .hover-3d > div:nth-child(8) { grid-column: 2; grid-row: 3; }
         .hover-3d > div:nth-child(9) { grid-column: 3; grid-row: 3; }
 
-        .hover-3d > div:nth-child(2):hover ~ .card { transform: perspective(850px) rotateX(8deg) rotateY(-10deg) translateY(-4px); }
-        .hover-3d > div:nth-child(3):hover ~ .card { transform: perspective(850px) rotateX(8deg) rotateY(0deg) translateY(-4px); }
-        .hover-3d > div:nth-child(4):hover ~ .card { transform: perspective(850px) rotateX(8deg) rotateY(10deg) translateY(-4px); }
-        .hover-3d > div:nth-child(5):hover ~ .card { transform: perspective(850px) rotateX(0deg) rotateY(-10deg) translateY(-4px); }
-        .hover-3d > div:nth-child(6):hover ~ .card { transform: perspective(850px) rotateX(0deg) rotateY(10deg) translateY(-4px); }
-        .hover-3d > div:nth-child(7):hover ~ .card { transform: perspective(850px) rotateX(-8deg) rotateY(-10deg) translateY(-4px); }
-        .hover-3d > div:nth-child(8):hover ~ .card { transform: perspective(850px) rotateX(-8deg) rotateY(0deg) translateY(-4px); }
-        .hover-3d > div:nth-child(9):hover ~ .card { transform: perspective(850px) rotateX(-8deg) rotateY(10deg) translateY(-4px); }
+        .hover-3d:has(> div:nth-child(2):hover) > .card { transform: perspective(850px) rotateX(8deg) rotateY(-10deg) translateY(-4px); }
+        .hover-3d:has(> div:nth-child(3):hover) > .card { transform: perspective(850px) rotateX(8deg) rotateY(0deg) translateY(-4px); }
+        .hover-3d:has(> div:nth-child(4):hover) > .card { transform: perspective(850px) rotateX(8deg) rotateY(10deg) translateY(-4px); }
+        .hover-3d:has(> div:nth-child(5):hover) > .card { transform: perspective(850px) rotateX(0deg) rotateY(-10deg) translateY(-4px); }
+        .hover-3d:has(> div:nth-child(6):hover) > .card { transform: perspective(850px) rotateX(0deg) rotateY(10deg) translateY(-4px); }
+        .hover-3d:has(> div:nth-child(7):hover) > .card { transform: perspective(850px) rotateX(-8deg) rotateY(-10deg) translateY(-4px); }
+        .hover-3d:has(> div:nth-child(8):hover) > .card { transform: perspective(850px) rotateX(-8deg) rotateY(0deg) translateY(-4px); }
+        .hover-3d:has(> div:nth-child(9):hover) > .card { transform: perspective(850px) rotateX(-8deg) rotateY(10deg) translateY(-4px); }
       `}</style>
 
       <div className="min-h-screen bg-old-paper font-dmsans selection:bg-accent-orange/30 selection:text-dark-chocolate relative">
@@ -389,6 +397,85 @@ export default function Profile() {
                   );
                 })}
               </div>
+            </div>
+          )}
+        </section>
+
+        <section>
+          <div className="mb-6">
+            <p className="text-xs uppercase tracking-widest text-accent-orange font-bold mb-2">
+              Experiences
+            </p>
+            <h2 className="font-playfair text-4xl md:text-5xl font-bold text-dark-chocolate">
+              Tour Tickets
+            </h2>
+          </div>
+
+          {tourTickets.length === 0 ? (
+            <div className="bg-white rounded-xl border border-dark-chocolate/10 p-10 text-center text-dark-chocolate/60">
+              No tour tickets yet. Book a tour to see your tickets here.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {tourTickets.map((ticket) => {
+                const museumId = ticket?.museum?.id;
+                const ticketUrl = museumId
+                  ? `/tour/${museumId}/payment-success/${ticket.booking_id}`
+                  : "/profile";
+                const parsedTourDate = new Date(ticket.tour_date);
+                const formattedTourDate = Number.isNaN(parsedTourDate.getTime())
+                  ? String(ticket.tour_date || "-")
+                  : parsedTourDate.toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "2-digit",
+                    });
+
+                return (
+                  <Link
+                    key={ticket.booking_id}
+                    to={ticketUrl}
+                    className="hover-3d mx-2 cursor-pointer"
+                    aria-label={`Open ticket ${ticket.ticket_code}`}
+                  >
+                    <div className="card w-full bg-dark-chocolate text-white border border-white/10 rounded-2xl shadow-xl bg-[radial-gradient(circle_at_bottom_left,#ffffff04_35%,transparent_36%),radial-gradient(circle_at_top_right,#ffffff04_35%,transparent_36%)] bg-size-[4.95em_4.95em]">
+                      <div className="card-body">
+                        <div className="flex justify-between mb-10">
+                          <div className="text-md font-bold uppercase truncate max-w-[85%] text-white/75" title={ticket?.museum?.name || "Museum"}>
+                            {ticket?.museum?.name || "Museum"}
+                          </div>
+                          <div className="text-5xl opacity-10">❁</div>
+                        </div>
+
+                        <div className="text-xs opacity-20 uppercase">Card Number</div>
+                        <div className="text-base mb-4 opacity-40 uppercase tracking-wide">
+                          {ticket.ticket_code}
+                        </div>
+
+                        <div className="flex justify-between pb-8">
+                          <div>
+                            <div className="text-xs opacity-20 uppercase">Owner</div>
+                            <div className="text-white/85">{user.username}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs opacity-20 uppercase">Tour Date</div>
+                            <div className="text-white/85">{formattedTourDate}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </section>
