@@ -237,7 +237,7 @@ const MuseumCard = ({ museum, onHeart, showHeart = false, onEnter }) => {
             <span className="text-xs font-bold uppercase tracking-wider">{museum.creator}</span>
           </div>
           <button
-            onClick={() => onEnter && onEnter(museum.id)}
+            onClick={() => onEnter && onEnter(museum)}
             className="btn btn-xs bg-dark-chocolate text-white hover:bg-accent-orange border-none"
           >
             Enter Museum
@@ -621,8 +621,9 @@ export default function Explore() {
     setMapCenter([museum.lat, museum.lng]);
   };
 
-  const handleEnterMuseum = (museumId, source = 'archive') => {
-    navigate(`/go-to-museum/${museumId}`, { state: { source } });
+  const handleEnterMuseum = (museum, source = 'archive') => {
+    if (!museum?.id) return;
+    navigate(`/go-to-museum/${museum.id}`, { state: { source, museum } });
   };
 
   const handleLikeCommunityMuseum = async (museumId) => {
@@ -926,7 +927,7 @@ export default function Explore() {
                 className="w-full transform-gpu"
                 style={{ perspective: '1000px' }}
               >
-                <MuseumCard museum={museum} onEnter={(museumId) => handleEnterMuseum(museumId, 'archive')} />
+                <MuseumCard museum={museum} onEnter={(museumData) => handleEnterMuseum(museumData, 'archive')} />
               </div>
             ))}
           </div>
@@ -1059,7 +1060,7 @@ export default function Explore() {
                     museum={museum}
                     showHeart={true}
                     onHeart={handleLikeCommunityMuseum}
-                    onEnter={(museumId) => handleEnterMuseum(museumId, 'community')}
+                    onEnter={(museumData) => handleEnterMuseum(museumData, 'community')}
                   />
                 </div>
               ))}

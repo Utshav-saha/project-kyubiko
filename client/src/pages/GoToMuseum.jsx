@@ -8,6 +8,7 @@ export default function GoToMuseum() {
   const navigate = useNavigate();
   const location = useLocation();
   const isCommunityMuseum = location.state?.source === 'community';
+  const communityMuseumFromState = location.state?.museum || null;
   const { id } = useParams();
 
   const [user, setUser] = useState(null);
@@ -96,6 +97,24 @@ export default function GoToMuseum() {
       return;
     }
 
+    if (isCommunityMuseum) {
+      const local = allArtifacts
+        .filter((item) =>
+          String(item.artifact_name || "")
+            .toLowerCase()
+            .includes(term.toLowerCase())
+        )
+        .slice(0, 8)
+        .map((item) => ({
+          artifact_id: item.artifact_id,
+          artifact_name: item.artifact_name,
+        }));
+
+      setSuggestions(local);
+      setShowSuggestions(local.length > 0);
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(`${API_URL}/museum/${museumId}/suggest?letters=${encodeURIComponent(term)}`, {
@@ -163,29 +182,86 @@ export default function GoToMuseum() {
         const authData = await authRes.json();
         setUser(authData.user);
 
-        const museumRes = await fetch(`${API_URL}/museum/info/${id}`, {
-          method: "GET",
-          headers: { token },
-        });
+        if (isCommunityMuseum) {
+          const miniRes = await fetch(`${API_URL}/view/authorize?id=${id}`, {
+            method: "GET",
+            headers: { token },
+          });
 
-        if (!museumRes.ok) throw new Error("Could not load museum details");
+          if (!miniRes.ok) throw new Error("Could not load mini museum details");
 
-        const museumData = await museumRes.json();
-
-        const selectedMuseum =
-          museumData ||
-          {
-            id,
-            name: "Museum",
-            description: "Museum details will be available shortly.",
-            image: "",
-            country: "Unknown",
-            category: "Unknown",
-            creator: "Unknown",
+          const miniData = await miniRes.json();
+          const selectedMuseum = {
+            id: Number(id),
+            name: miniData?.miniMuseum?.mini_museum_name || communityMuseumFromState?.name || "Mini Museum",
+            description:
+              miniData?.miniMuseum?.description ||
+              communityMuseumFromState?.description ||
+              "Mini museum details will be available shortly.",
+            image: miniData?.miniMuseum?.picture_url || communityMuseumFromState?.image || "",
+            country: communityMuseumFromState?.country || "Community",
+            category: communityMuseumFromState?.category || "Community",
+            creator: communityMuseumFromState?.creator || "Unknown",
           };
 
-        setMuseum(selectedMuseum);
-        await fetchArtifacts(selectedMuseum.id, "");
+          setMuseum(selectedMuseum);
+
+          const sectionsRes = await fetch(`${API_URL}/view/sections?mini_museum_id=${id}`, {
+            method: "GET",
+            headers: { token },
+          });
+
+          if (!sectionsRes.ok) throw new Error("Could not load mini museum artifacts");
+
+          const sectionsData = await sectionsRes.json();
+          const flatArtifacts = (sectionsData || [])
+            .flatMap((section) => {
+              const rawItems = Array.isArray(section.items)
+                ? section.items
+                : typeof section.items === "string"
+                  ? JSON.parse(section.items)
+                  : [];
+              return rawItems;
+            })
+            .map((item) => ({
+              artifact_id: item.artifact_id,
+              artifact_name: item.name || "Artifact",
+              description: item.description || "",
+              creator: item.creator || "Unknown",
+              time_period: item.time_period || "Unknown",
+              picture_url: item.image || "",
+              category_name: item.category_name || "Unknown",
+              origin: item.origin || "Unknown",
+            }));
+
+          setAllArtifacts(flatArtifacts);
+          setActiveIndex(0);
+        } else {
+          const museumRes = await fetch(`${API_URL}/museum/info/${id}`, {
+            method: "GET",
+            headers: { token },
+          });
+
+          if (!museumRes.ok) throw new Error("Could not load museum details");
+
+          const museumData = await museumRes.json();
+
+          const selectedMuseum =
+            museumData ||
+            {
+              id,
+              name: "Museum",
+              description: "Museum details will be available shortly.",
+              image: "",
+              country: "Unknown",
+              category: "Unknown",
+              creator: "Unknown",
+            };
+
+          setMuseum(selectedMuseum);
+          await fetchArtifacts(selectedMuseum.id, "");
+        }
+
         await fetchFavoritesState();
       } catch (error) {
         console.error(error.message);
@@ -196,7 +272,7 @@ export default function GoToMuseum() {
 
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, navigate]);
+  }, [id, navigate, isCommunityMuseum, communityMuseumFromState]);
 
   const next = () => {
     if (filteredArtifacts.length === 0) return;
