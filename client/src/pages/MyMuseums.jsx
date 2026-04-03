@@ -8,6 +8,7 @@ import {
   Image as ImageIcon,
   Upload,
   Heart,
+  Trash2,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { API_URL, CLOUD_NAME, UPLOAD_PRESET } from "../config";
@@ -20,6 +21,7 @@ export default function MyMuseums () {
   const [museums, setMuseums] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [deletingMuseumId, setDeletingMuseumId] = useState(null);
 
   const [formData, setFormData] = useState({
     mini_museum_name: "",
@@ -150,6 +152,45 @@ export default function MyMuseums () {
         image: file,
         imagePreview: previewUrl,
       }));
+    }
+  };
+
+  const handleDeleteMuseum = async (e, museumId) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const shouldDelete = window.confirm(
+      "Are you sure you want to delete this mini museum? All artifacts inside it will be deleted.",
+    );
+
+    if (!shouldDelete) return;
+
+    try {
+      setDeletingMuseumId(museumId);
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`${API_URL}/my-museums/${museumId}`, {
+        method: "DELETE",
+        headers: {
+          token,
+        },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to delete mini museum");
+      }
+
+      setMuseums((prev) =>
+        prev.filter((museum) => museum.mini_museum_id !== museumId),
+      );
+      alert("Mini museum deleted successfully.");
+    } catch (err) {
+      console.error("Delete failed:", err);
+      alert("Could not delete mini museum. Please try again.");
+    } finally {
+      setDeletingMuseumId(null);
     }
   };
 
@@ -299,6 +340,15 @@ export default function MyMuseums () {
               key={museum.mini_museum_id} 
               className="group h-112.5 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 relative flex flex-col border border-dark-chocolate/10"
             >
+              <button
+                type="button"
+                onClick={(e) => handleDeleteMuseum(e, museum.mini_museum_id)}
+                disabled={deletingMuseumId === museum.mini_museum_id}
+                className="absolute top-3 right-3 z-30 p-2 rounded-full bg-white/90 text-red-600 hover:bg-red-500 hover:text-white transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Delete mini museum"
+              >
+                <Trash2 size={16} />
+              </button>
             
               <div className="relative h-[65%] overflow-hidden">
                 {/* Updated Image Column */}
