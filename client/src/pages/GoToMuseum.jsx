@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { API_URL } from "../config";
 import { Search, ChevronLeft, ChevronRight, Heart, User, MapPin } from "lucide-react";
 import UserAvatarMenu from "../components/common/UserAvatarMenu";
 
 export default function GoToMuseum() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isCommunityMuseum = location.state?.source === 'community';
   const { id } = useParams();
 
   const [user, setUser] = useState(null);
@@ -379,26 +381,28 @@ export default function GoToMuseum() {
               <p><span className="font-bold">Category:</span> {museum?.category || "Unknown"}</p>
             </div>
 
-            <div className="mt-auto flex flex-wrap items-center gap-3">
-              <Link
-                to={`/trivia/${id}`}
-                className="btn bg-white text-dark-chocolate border border-dark-chocolate/20 hover:bg-old-paper"
-              >
-                Take Trivia
-              </Link>
-              <Link
-                to={`/tour/${id}`}
-                className="btn bg-white text-dark-chocolate border border-dark-chocolate/20 hover:bg-old-paper"
-              >
-                Book a Tour
-              </Link>
-              <Link
-                to={`/leaderboard/${id}`}
-                className="btn bg-dark-chocolate text-white hover:bg-accent-orange border-none"
-              >
-                Go To Leaderboard
-              </Link>
-            </div>
+            {!isCommunityMuseum && (
+              <div className="mt-auto flex flex-wrap items-center gap-3">
+                <Link
+                  to={`/trivia/${id}`}
+                  className="btn bg-white text-dark-chocolate border border-dark-chocolate/20 hover:bg-old-paper"
+                >
+                  Take Trivia
+                </Link>
+                <Link
+                  to={`/tour/${id}`}
+                  className="btn bg-white text-dark-chocolate border border-dark-chocolate/20 hover:bg-old-paper"
+                >
+                  Book a Tour
+                </Link>
+                <Link
+                  to={`/leaderboard/${id}`}
+                  className="btn bg-dark-chocolate text-white hover:bg-accent-orange border-none"
+                >
+                  Go To Leaderboard
+                </Link>
+              </div>
+            )}
           </div>
 
           <div className="bg-white border border-dark-chocolate/10 rounded-2xl shadow-md overflow-hidden min-h-80">
@@ -434,16 +438,11 @@ export default function GoToMuseum() {
           </div>
 
           {filteredArtifacts.length === 0 ? (
-            <div className="text-center text-white/70 py-10">No artifacts found in this category.</div>
+            <div className="relative z-10 text-center text-white/80 py-16">
+              No artifacts found for this category.
+            </div>
           ) : (
-            <div className="relative h-130 flex items-center justify-center">
-              <button
-                onClick={prev}
-                className="absolute left-2 md:left-8 z-20 w-11 h-11 rounded-full bg-white/15 text-white border border-white/20 hover:bg-white/25 flex items-center justify-center"
-              >
-                <ChevronLeft size={22} />
-              </button>
-
+            <div className="relative z-10 flex items-center justify-center min-h-[30rem] md:min-h-[34rem]">
               {leftArtifact && (
                 <div className="hidden md:block absolute left-[7%] w-64 h-97.5 opacity-35 scale-90 pointer-events-none transition-all">
                   <img src={leftArtifact.picture_url || "https://placehold.co/600x800"} alt={leftArtifact.artifact_name} className="w-full h-56 object-cover rounded-t-xl" />
@@ -452,6 +451,13 @@ export default function GoToMuseum() {
                   </div>
                 </div>
               )}
+
+              <button
+                onClick={prev}
+                className="absolute left-2 md:left-8 z-20 w-11 h-11 rounded-full bg-white/15 text-white border border-white/20 hover:bg-white/25 flex items-center justify-center"
+              >
+                <ChevronLeft size={22} />
+              </button>
 
               {activeArtifact && (
                 <div

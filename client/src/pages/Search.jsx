@@ -8,6 +8,7 @@ import UserAvatarMenu from "../components/common/UserAvatarMenu";
 export default function Search() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(localStorage.getItem("role") || "curator");
   const [searching, setSearching] = useState(false);
 
   const [artifacts, setArtifacts] = useState([]);
@@ -49,6 +50,8 @@ export default function Search() {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
+        const role = localStorage.getItem("role") || "curator";
+        setUserRole(role);
 
         if (!token) {
           localStorage.removeItem("token");
@@ -57,10 +60,17 @@ export default function Search() {
           return;
         }
 
-        const response = await fetch(`${API_URL}/search/authorize`, {
+        let response = await fetch(`${API_URL}/search/authorize`, {
           method: "GET",
           headers: { token: token },
         });
+
+        if (!response.ok && response.status === 403) {
+          response = await fetch(`${API_URL}/explore/authorize`, {
+            method: "GET",
+            headers: { token: token },
+          });
+        }
 
         const parseRes = await response.json();
 
@@ -274,30 +284,42 @@ export default function Search() {
                 tabIndex="-1"
                 className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow text-black"
               >
-                <li>
-                  <Link to="/my-museums">My Museums</Link>
-                </li>
-                <li>
-                  <Link to="/explore">Explore</Link>
-                </li>
-                <li>
-                  <Link to="/profile">Profile</Link>
-                </li>
+                {userRole === "manager" ? (
+                  <>
+                    <li><Link to="/manager-dashboard">Museum</Link></li>
+                    <li><Link to="/explore">Explore</Link></li>
+                    <li><Link to="/tours">Tours</Link></li>
+                    <li><Link to="/manager-quiz/new">Quiz</Link></li>
+                    <li><Link to="/search">Search</Link></li>
+                  </>
+                ) : (
+                  <>
+                    <li><Link to="/my-museums">My Museums</Link></li>
+                    <li><Link to="/explore">Explore</Link></li>
+                    <li><Link to="/profile">Profile</Link></li>
+                  </>
+                )}
               </ul>
             </div>
             <a className="btn btn-ghost text-xl text-white ml-2">Kyubiku</a>
           </div>
           <div className="navbar-center hidden lg:flex">
             <ul className="menu menu-horizontal px-1 gap-5 text-white">
-              <li>
-                <Link to="/my-museums">My museums</Link>
-              </li>
-              <li>
-                <Link to="/explore">Explore</Link>
-              </li>
-              <li>
-                <Link to="/profile">Profile</Link>
-              </li>
+              {userRole === "manager" ? (
+                <>
+                  <li><Link to="/manager-dashboard">Museum</Link></li>
+                  <li><Link to="/explore">Explore</Link></li>
+                  <li><Link to="/tours">Tours</Link></li>
+                  <li><Link to="/manager-quiz/new">Quiz</Link></li>
+                  <li><Link to="/search" className="text-accent-yellow">Search</Link></li>
+                </>
+              ) : (
+                <>
+                  <li><Link to="/my-museums">My museums</Link></li>
+                  <li><Link to="/explore">Explore</Link></li>
+                  <li><Link to="/profile">Profile</Link></li>
+                </>
+              )}
             </ul>
           </div>
           <div className="navbar-end">

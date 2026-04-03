@@ -247,7 +247,7 @@ export default function ViewMuseum() {
       <div className="fixed inset-0 bg-noise opacity-40 pointer-events-none mix-blend-multiply z-0"></div>
 
       {/* --- Hero Section --- */}
-      <div className="relative bg-dark-chocolate text-old-paper pb-24 overflow-hidden z-10">
+      <div className="relative bg-dark-chocolate text-old-paper pb-24 overflow-visible z-30">
         <div className="absolute inset-0 z-0">
           <img
             src={
@@ -261,7 +261,7 @@ export default function ViewMuseum() {
         </div>
 
         {/* Navbar */}
-        <div className="navbar shadow-sm bg-transparent z-20 relative border-b border-white/5">
+        <div className="navbar shadow-sm bg-transparent z-40 relative border-b border-white/5 overflow-visible">
           <div className="navbar-start">
             <a className="btn btn-ghost text-xl text-white ml-5">Kyubiku</a>
           </div>
@@ -281,7 +281,7 @@ export default function ViewMuseum() {
               </li>
             </ul>
           </div>
-          <div className="navbar-end gap-3 pr-6">
+          <div className="navbar-end gap-3 pr-6 relative z-[1100]">
             <div className="hidden md:block bg-white/10 px-4 py-2 rounded-full">
               <span className="text-sm font-medium text-white">
                 {museumInfo.user?.username}

@@ -416,8 +416,18 @@ export default function CreateTour() {
               </Link>
             </li>
             <li>
+              <Link to="/explore" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                Explore
+              </Link>
+            </li>
+            <li>
               <Link to="/tours" className="text-accent-yellow bg-white/10 rounded-lg">
                 Tours
+              </Link>
+            </li>
+            <li>
+              <Link to="/manager-quiz/new" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                Quiz
               </Link>
             </li>
           </ul>

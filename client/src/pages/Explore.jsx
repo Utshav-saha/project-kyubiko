@@ -328,6 +328,7 @@ const FilterPanel = ({
 export default function Explore() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(localStorage.getItem('role') || 'curator');
   const [loading, setLoading] = useState(true);
   const [mapMuseums, setMapMuseums] = useState([]);
   const [archiveMuseums, setArchiveMuseums] = useState([]);
@@ -368,6 +369,8 @@ export default function Explore() {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role') || 'curator';
+        setUserRole(role);
 
         if (!token) {
           localStorage.removeItem('token');
@@ -619,8 +622,8 @@ export default function Explore() {
     setMapCenter([museum.lat, museum.lng]);
   };
 
-  const handleEnterMuseum = (museumId) => {
-    navigate(`/go-to-museum/${museumId}`);
+  const handleEnterMuseum = (museumId, source = 'archive') => {
+    navigate(`/go-to-museum/${museumId}`, { state: { source } });
   };
 
   const handleLikeCommunityMuseum = async (museumId) => {
@@ -679,20 +682,44 @@ export default function Explore() {
               </svg>
             </div>
             <ul tabIndex="-1" className="menu menu-sm dropdown-content bg-dark-chocolate rounded-box z-100 mt-3 w-52 p-2 shadow-xl text-white border border-white/10">
-              <li><Link to="/" className="hover:bg-white/10">Home</Link></li>
-              <li><Link to="/my-museums" className="hover:bg-white/10">My Museums</Link></li>
-              <li><Link to="/explore" className="hover:bg-white/10 text-accent-yellow">Explore</Link></li>
-              <li><Link to="/search" className="hover:bg-white/10">Search</Link></li>
+              {userRole === 'manager' ? (
+                <>
+                  <li><Link to="/manager-dashboard" className="hover:bg-white/10">Museum</Link></li>
+                  <li><Link to="/explore" className="hover:bg-white/10 text-accent-yellow">Explore</Link></li>
+                  <li><Link to="/tours" className="hover:bg-white/10">Tours</Link></li>
+                  <li><Link to="/manager-quiz/new" className="hover:bg-white/10">Quiz</Link></li>
+                  <li><Link to="/search" className="hover:bg-white/10">Search</Link></li>
+                </>
+              ) : (
+                <>
+                  <li><Link to="/" className="hover:bg-white/10">Home</Link></li>
+                  <li><Link to="/my-museums" className="hover:bg-white/10">My Museums</Link></li>
+                  <li><Link to="/explore" className="hover:bg-white/10 text-accent-yellow">Explore</Link></li>
+                  <li><Link to="/search" className="hover:bg-white/10">Search</Link></li>
+                </>
+              )}
             </ul>
           </div>
           <Link to="/" className="btn btn-ghost text-xl text-white ml-2 font-playfair">Kyubiko</Link>
         </div>
         <div className="navbar-center hidden lg:flex">
           <ul className="menu menu-horizontal px-1 gap-2 text-white/80 font-medium">
-            <li><Link to="/" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">Home</Link></li>
-            <li><Link to="/my-museums" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">My Museums</Link></li>
-            <li><Link to="/explore" className="text-accent-yellow bg-white/10 rounded-lg">Explore</Link></li>
-            <li><Link to="/search" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">Search</Link></li>
+            {userRole === 'manager' ? (
+              <>
+                <li><Link to="/manager-dashboard" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">Museum</Link></li>
+                <li><Link to="/explore" className="text-accent-yellow bg-white/10 rounded-lg">Explore</Link></li>
+                <li><Link to="/tours" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">Tours</Link></li>
+                <li><Link to="/manager-quiz/new" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">Quiz</Link></li>
+                <li><Link to="/search" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">Search</Link></li>
+              </>
+            ) : (
+              <>
+                <li><Link to="/" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">Home</Link></li>
+                <li><Link to="/my-museums" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">My Museums</Link></li>
+                <li><Link to="/explore" className="text-accent-yellow bg-white/10 rounded-lg">Explore</Link></li>
+                <li><Link to="/search" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">Search</Link></li>
+              </>
+            )}
           </ul>
         </div>
         <div className="navbar-end gap-3 pr-5">
@@ -824,7 +851,7 @@ export default function Explore() {
                   </span>
                   <div className="mt-3">
                     <button
-                      onClick={() => handleEnterMuseum(museum.id)}
+                      onClick={() => handleEnterMuseum(museum.id, 'archive')}
                       className="btn btn-xs bg-dark-chocolate text-white hover:bg-accent-orange border-none"
                     >
                       Enter Museum
@@ -900,7 +927,7 @@ export default function Explore() {
                 className="w-full transform-gpu"
                 style={{ perspective: '1000px' }}
               >
-                <MuseumCard museum={museum} onEnter={handleEnterMuseum} />
+                <MuseumCard museum={museum} onEnter={(museumId) => handleEnterMuseum(museumId, 'archive')} />
               </div>
             ))}
           </div>
@@ -1033,7 +1060,7 @@ export default function Explore() {
                     museum={museum}
                     showHeart={true}
                     onHeart={handleLikeCommunityMuseum}
-                    onEnter={handleEnterMuseum}
+                    onEnter={(museumId) => handleEnterMuseum(museumId, 'community')}
                   />
                 </div>
               ))}
