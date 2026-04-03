@@ -849,7 +849,7 @@ export default function Explore() {
                   </span>
                   <div className="mt-3">
                     <button
-                      onClick={() => handleEnterMuseum(museum.id, 'archive')}
+                      onClick={() => handleEnterMuseum(museum, 'archive')}
                       className="btn btn-xs bg-dark-chocolate text-white hover:bg-accent-orange border-none"
                     >
                       Enter Museum
