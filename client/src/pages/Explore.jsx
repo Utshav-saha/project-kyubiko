@@ -692,7 +692,6 @@ export default function Explore() {
                 </>
               ) : (
                 <>
-                  <li><Link to="/" className="hover:bg-white/10">Home</Link></li>
                   <li><Link to="/my-museums" className="hover:bg-white/10">My Museums</Link></li>
                   <li><Link to="/explore" className="hover:bg-white/10 text-accent-yellow">Explore</Link></li>
                   <li><Link to="/search" className="hover:bg-white/10">Search</Link></li>
@@ -714,7 +713,6 @@ export default function Explore() {
               </>
             ) : (
               <>
-                <li><Link to="/" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">Home</Link></li>
                 <li><Link to="/my-museums" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">My Museums</Link></li>
                 <li><Link to="/explore" className="text-accent-yellow bg-white/10 rounded-lg">Explore</Link></li>
                 <li><Link to="/search" className="hover:text-white hover:bg-white/10 rounded-lg transition-colors">Search</Link></li>
