@@ -1,10 +1,21 @@
 {
-	"name": "project-kyubiko",
-	"private": true,
-	"scripts": {
-		"dev:client": "cd client && npm run dev",
-		"dev:api": "cd api && node index.js",
-		"build": "cd client && npm run build",
-		"build:client": "cd client && npm run build"
-	}
+  "name": "project-kyubiko",
+  "private": true,
+  "scripts": {
+    "dev:client": "cd client && npm run dev",
+    "dev:api": "node api/index.js",
+    "build": "cd client && npm run build",
+    "build:client": "cd client && npm run build"
+  },
+  "dependencies": {
+    "axios": "^1.13.5",
+    "bcrypt": "^6.0.0",
+    "cloudinary": "^2.9.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.18.0",
+    "react-router-dom": "^7.13.0"
+  }
 }
