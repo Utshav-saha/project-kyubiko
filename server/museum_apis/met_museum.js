@@ -1,5 +1,5 @@
 const axios = require('axios');
-const pool = require('../db');
+const pool = require('../../api/db');
 
 const departments = [
     { departmentId: 1, displayName: "American Decorative Arts" },

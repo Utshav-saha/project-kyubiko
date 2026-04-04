@@ -17,21 +17,21 @@ if (process.env.VERCEL) {
 	});
 }
 
-app.use("/auth", require("./routes/auth"));
-app.use("/my-museums", require("./routes/myMuseums"));
-app.use("/search", require("./routes/search"));
-app.use("/card", require("./routes/card"));
-app.use("/view", require("./routes/view"));
-app.use("/explore", require("./routes/explore"));
-app.use("/museum", require("./routes/museum"));
-app.use("/leaderboard", require("./routes/leaderboard"));
-app.use('/profile', require('./routes/profile'));
-app.use("/landing", require("./routes/landing"));
-app.use("/manager", require("./routes/manager"));
-app.use("/quiz", require("./routes/quiz"));
-app.use("/manager-quiz", require("./routes/manager_quiz"));
-app.use("/tour", require("./routes/tour"));
-app.use("/analytics", require("./routes/analytics"));
+app.use("/auth", require("../server/routes/auth"));
+app.use("/my-museums", require("../server/routes/myMuseums"));
+app.use("/search", require("../server/routes/search"));
+app.use("/card", require("../server/routes/card"));
+app.use("/view", require("../server/routes/view"));
+app.use("/explore", require("../server/routes/explore"));
+app.use("/museum", require("../server/routes/museum"));
+app.use("/leaderboard", require("../server/routes/leaderboard"));
+app.use('/profile', require('../server/routes/profile'));
+app.use("/landing", require("../server/routes/landing"));
+app.use("/manager", require("../server/routes/manager"));
+app.use("/quiz", require("../server/routes/quiz"));
+app.use("/manager-quiz", require("../server/routes/manager_quiz"));
+app.use("/tour", require("../server/routes/tour"));
+app.use("/analytics", require("../server/routes/analytics"));
 
 if (!process.env.VERCEL) {
 	app.listen(PORT, () => {
