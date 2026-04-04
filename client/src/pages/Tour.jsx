@@ -257,7 +257,7 @@ export default function Tour() {
 								<span className="text-sm text-dark-chocolate/60">Only upcoming tours can be booked.</span>
 							</div>
 
-							<div className="bg-white border border-dark-chocolate/10 rounded-xl px-4 pt-3 pb-4 min-w-[280px]">
+							<div className="bg-white border border-dark-chocolate/10 rounded-xl px-4 pt-3 pb-4 min-w-70">
 								<p className="text-xs uppercase tracking-widest text-dark-chocolate/60 font-bold mb-2">Filter by Start Time</p>
 								<div className="relative pt-4 pb-2">
 									<div className="absolute top-6 left-0 w-full h-1.5 bg-stone-200 rounded-full"></div>

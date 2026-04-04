@@ -238,7 +238,7 @@ export default function PaymentSuccess() {
               </div>
 
               <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-[1.3fr_0.7fr] gap-6 items-stretch">
-                <div className="border border-dashed border-dark-chocolate/25 rounded-xl p-5 bg-gradient-to-br from-old-paper/60 to-white">
+                <div className="border border-dashed border-dark-chocolate/25 rounded-xl p-5 bg-linear-to-br from-old-paper/60 to-white">
                   <p className="text-xs uppercase tracking-widest text-dark-chocolate/60 font-bold">Tour Ticket</p>
                   <h2 className="font-playfair text-3xl font-bold mt-2 leading-tight">{booking.tour_title}</h2>
                   <p className="text-sm text-dark-chocolate/70 mt-1">{booking.museum?.name || "Museum"}</p>

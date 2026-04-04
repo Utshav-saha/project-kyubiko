@@ -128,7 +128,7 @@ export default function Trivia() {
           <h1 className="font-imperial text-5xl md:text-6xl text-accent-orange mb-3">Are you ready?</h1>
           <h2 className="font-playfair text-5xl md:text-6xl font-bold text-dark-chocolate mb-8">{museumName}</h2>
 
-          <div className="max-w-md mx-auto rounded-xl p-5 mb-8 bg-gradient-to-r from-accent-yellow/90 to-accent-orange/85 border border-accent-orange/50 shadow-lg">
+          <div className="max-w-md mx-auto rounded-xl p-5 mb-8 bg-linear-to-r from-accent-yellow/90 to-accent-orange/85 border border-accent-orange/50 shadow-lg">
             <p className="text-xs text-dark-chocolate/80 uppercase tracking-[0.2em] font-dmsans font-black">Total Questions</p>
             <p className="font-playfair text-5xl font-black text-dark-chocolate mt-1">{totalQuestions}</p>
           </div>

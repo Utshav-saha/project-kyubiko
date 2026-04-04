@@ -518,7 +518,7 @@ export default function GoToMuseum() {
               No artifacts found for this category.
             </div>
           ) : (
-            <div className="relative z-10 flex items-center justify-center min-h-[30rem] md:min-h-[34rem]">
+            <div className="relative z-10 flex items-center justify-center min-h-120 md:min-h-136">
               {leftArtifact && (
                 <div className="hidden md:block absolute left-[7%] w-64 h-97.5 opacity-35 scale-90 pointer-events-none transition-all">
                   <img src={leftArtifact.picture_url || "https://placehold.co/600x800"} alt={leftArtifact.artifact_name} className="w-full h-56 object-cover rounded-t-xl" />

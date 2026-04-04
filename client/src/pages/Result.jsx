@@ -31,7 +31,7 @@ export default function Result() {
           <h1 className="font-playfair text-4xl md:text-5xl font-bold mb-2">{museumName}</h1>
           <p className="text-dark-chocolate/70 mb-8">You finished in {minutes}m {seconds}s</p>
 
-          <div className="max-w-xs mx-auto rounded-xl p-5 bg-gradient-to-r from-accent-yellow/90 to-accent-orange/85 border border-accent-orange/50 shadow-lg mb-8">
+          <div className="max-w-xs mx-auto rounded-xl p-5 bg-linear-to-r from-accent-yellow/90 to-accent-orange/85 border border-accent-orange/50 shadow-lg mb-8">
             <p className="text-xs text-dark-chocolate/80 uppercase tracking-[0.2em] font-black">Points</p>
             <p className="font-playfair text-5xl font-black text-dark-chocolate mt-1">{score}</p>
             <p className="text-sm text-dark-chocolate/75 mt-1">out of {total}</p>

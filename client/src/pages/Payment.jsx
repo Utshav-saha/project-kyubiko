@@ -175,7 +175,7 @@ export default function Payment() {
 					</Link>
 				</div>
 
-				<div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] rounded-2xl overflow-hidden shadow-xl border border-dark-chocolate/15 bg-white min-h-[620px]">
+				<div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] rounded-2xl overflow-hidden shadow-xl border border-dark-chocolate/15 bg-white min-h-155">
 					<aside className="bg-dark-chocolate text-white p-8 md:p-10 relative overflow-hidden">
 						<div className="absolute inset-0 opacity-25 bg-noise mix-blend-multiply"></div>
 						<div className="relative z-10 space-y-8">
