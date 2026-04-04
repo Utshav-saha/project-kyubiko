@@ -127,7 +127,7 @@ export default function Login() {
     <div className="bg-dark-chocolate w-full h-screen flex p-8 gap-30">
       <div className="w-1/2 h-full rounded-2xl overflow-hidden relative">
         <img
-          src="src/assets/loginBg.jpg"
+          src="/loginBg.jpg"
           alt=""
           className="w-full h-full object-cover"
         />
