@@ -14,21 +14,21 @@ const Landing = () => {
   const slides = [
     {
       id: 1,
-      image: "src/assets/colosseum.svg",
+      image: "/colosseum.svg",
       title: "Colosseum, Rome, Italy",
       text: "Uncover the secrets of the gladiators at the Roman Colosseum.",
       bgColor: "bg-[#FFE55C]",
     },
     {
       id: 2,
-      image: "src/assets/pyramid.svg",
+      image: "/pyramid.svg",
       title: "Pyramids, Egypt",
       text: "Explore the City of Pharaohs and the ancient pyramids of Giza.",
       bgColor: "bg-[#FF7043]",
     },
     {
       id: 3,
-      image: "src/assets/taj.svg",
+      image: "/taj.svg",
       title: "Taj Mahal, India",
       text: "An immense mausoleum of white marble, built in Agra between 1631 and 1648.",
       bgColor: "bg-[#4DB6AC]",
@@ -206,7 +206,7 @@ const Landing = () => {
             <div className="relative w-full lg:w-1/2 max-w-125 h-100 lg:h-125">
               <div className="hero-img-left absolute top-10 left-10 w-48 max-h-40 bg-[#FFE55C] flex items-end justify-center shadow-lg z-10">
                 <img
-                  src="src/assets/woman.png"
+                  src="/woman.png"
                   alt="Statue Woman"
                   className="w-[130%] max-w-none h-auto -mt-24 object-cover object-top grayscale contrast-125 drop-shadow-lg"
                 />
@@ -214,7 +214,7 @@ const Landing = () => {
 
               <div className="hero-img-right absolute bottom-15 right-10 lg:right-20 w-44 h-32 bg-[#FF7043] flex items-end justify-center shadow-lg z-20">
                 <img
-                  src="src/assets/head.png"
+                  src="/head.png"
                   alt="Statue Man"
                   className="w-full max-w-none h-auto -mt-20 object-cover object-top grayscale contrast-125 drop-shadow-lg"
                 />
@@ -345,7 +345,7 @@ const Landing = () => {
 
                     <div className="absolute -top-20 -right-6 w-56 z-20 drop-shadow-2xl hover:scale-105 transition-transform duration-500">
                       <img
-                        src="src/assets/axe.png"
+                        src="/axe.png"
                         alt="Viking Axe"
                         className="axe-anim w-full h-72 object-contain rotate-15 contrast-125"
                       />
@@ -370,7 +370,7 @@ const Landing = () => {
                     <div className="absolute -top-24 -right-8 w-72 z-20 drop-shadow-2xl hover:scale-105 transition-transform duration-500">
                       {/* Added class: horse-anim */}
                       <img
-                        src="src/assets/horse.png"
+                        src="/horse.png"
                         className="horse-anim w-full h-auto object-contain"
                         alt="Roman Horse"
                       />
@@ -451,7 +451,7 @@ const Landing = () => {
             <div className="misc-grid-item border border-dashed border-brown rounded-2xl p-4 flex justify-center items-center overflow-hidden ">
               <img
                 className="h-full w-full object-contain transition-transform duration-300 hover:scale-110 cursor-pointer"
-                src="src/assets/boy2.png"
+                src="/boy2.png"
                 alt="Boy"
               />
             </div>
@@ -468,7 +468,7 @@ const Landing = () => {
               <div className="h-full flex justify-center items-center overflow-hidden">
                 <img
                   className="max-h-30 w-auto object-contain transition-transform duration-300 hover:scale-110 cursor-pointer"
-                  src="src/assets/scar.png"
+                  src="/scar.png"
                   alt="Scar"
                 />
               </div>
@@ -477,7 +477,7 @@ const Landing = () => {
             <div className="misc-grid-item col-span-1 lg:col-span-2 row-span-1 lg:row-span-2 border border-dashed border-brown rounded-2xl p-4 flex justify-center items-center overflow-hidden ">
               <img
                 className="h-full w-full object-contain transition-transform duration-300 hover:scale-110 cursor-pointer"
-                src="src/assets/dinosaur.png"
+                src="/dinosaur.png"
                 alt="Dinosaur"
               />
             </div>
@@ -485,7 +485,7 @@ const Landing = () => {
             <div className="misc-grid-item border border-dashed border-brown rounded-2xl p-4 flex justify-center items-center overflow-hidden ">
               <img
                 className="h-full w-full object-contain transition-transform duration-300 hover:scale-110 cursor-pointer"
-                src="src/assets/standing.png"
+                src="/standing.png"
                 alt="Standing"
               />
             </div>
@@ -507,7 +507,7 @@ const Landing = () => {
               <div className="absolute z-0 w-2/3 h-3/5 bg-[#4DB6AC] rounded-xl transform translate-y-3 shadow-sm"></div>
               <img
                 className="relative z-10 h-full w-auto object-contain transition-transform duration-300 hover:scale-110 cursor-pointer drop-shadow-md"
-                src="src/assets/angel.png"
+                src="/angel.png"
                 alt="Angel"
               />
             </div>
