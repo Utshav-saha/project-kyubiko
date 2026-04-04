@@ -1,5 +1,4 @@
 const express = require('express');
-const pool = require('./db');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -8,6 +7,15 @@ const PORT = process.env.PORT || 6543;
 
 app.use(cors());
 app.use(express.json());
+
+// Vercel rewrite keeps /api prefix; strip it so existing route mounts still work.
+if (process.env.VERCEL) {
+	app.use((req, _res, next) => {
+		if (req.url === '/api') req.url = '/';
+		else if (req.url.startsWith('/api/')) req.url = req.url.slice(4);
+		next();
+	});
+}
 
 app.use("/auth", require("./routes/auth"));
 app.use("/my-museums", require("./routes/myMuseums"));
@@ -25,7 +33,10 @@ app.use("/manager-quiz", require("./routes/manager_quiz"));
 app.use("/tour", require("./routes/tour"));
 app.use("/analytics", require("./routes/analytics"));
 
+if (!process.env.VERCEL) {
+	app.listen(PORT, () => {
+		console.log(`Server is running on port ${PORT}`);
+	});
+}
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+module.exports = app;

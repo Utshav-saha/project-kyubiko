@@ -1,1 +1,10 @@
-{}
+{
+	"name": "project-kyubiko",
+	"private": true,
+	"scripts": {
+		"dev:client": "cd client && npm run dev",
+		"dev:api": "cd api && node index.js",
+		"build": "cd client && npm run build",
+		"build:client": "cd client && npm run build"
+	}
+}
