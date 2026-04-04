@@ -176,7 +176,7 @@ const Landing = () => {
                   
                 </ul>
               </div>
-              <a className="btn btn-ghost text-xl text-white ml-5">Kyubiku</a>
+              <a className="btn btn-ghost text-xl text-white ml-5">Kyubiko</a>
             </div>
             <div className="navbar-center hidden lg:flex">
               <ul className="menu menu-horizontal px-1 text-white">

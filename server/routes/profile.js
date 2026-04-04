@@ -8,7 +8,6 @@ const isViewerRole = (req) => {
 };
 
 
-// suggestions
 router.get("/authorize", authorization, async (req, res) => {
 	try {
 		if (!isViewerRole(req)) {
@@ -54,6 +53,7 @@ router.post("/avatar", authorization, async (req, res) => {
     }
 });
 
+// suggestions
 router.get("/suggestions", authorization, async (req, res) => {
 	try {
 		if (!isViewerRole(req)) {
@@ -171,7 +171,7 @@ router.get("/overview", authorization, async (req, res) => {
                 FROM mini_museums 
                 WHERE curator_id = $1) AS total_mini_museums,
 
-                (SELECT COUNT(*) 
+                (SELECT COUNT(DISTINCT s.artifact_id) 
                 FROM sections s 
                 JOIN mini_museums mm ON s.mini_museum_id = mm.mini_museum_id 
                 WHERE mm.curator_id = $1) AS total_artifacts,

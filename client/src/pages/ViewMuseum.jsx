@@ -265,13 +265,13 @@ export default function ViewMuseum() {
         {/* Navbar */}
         <div className="navbar shadow-sm bg-transparent z-40 relative border-b border-white/5 overflow-visible">
           <div className="navbar-start">
-            <a className="btn btn-ghost text-xl text-white ml-5">Kyubiku</a>
+            <a className="btn btn-ghost text-xl text-white ml-5">Kyubiko</a>
           </div>
           <div className="navbar-center hidden lg:flex">
             <ul className="menu menu-horizontal px-1 text-white">
-              <li>
+              {/* <li>
                 <Link to="/">Home</Link>
-              </li>
+              </li> */}
               <li>
                 <Link to="/my-museums">My Museums</Link>
               </li>

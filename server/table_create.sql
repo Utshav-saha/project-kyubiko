@@ -478,6 +478,7 @@ end;
 $$ language plpgsql
 
 
+-- // get location of a previous or new created country
 create or replace function get_location_id(
     p_location_id integer,
     p_city varchar,
@@ -657,6 +658,9 @@ select
                 ) filter (where a.artifact_id is not null),
                 '[]'::json
             ) as items
+
+--// filter diye section e artifact na thakle empty array instead of null 
+--// coalesce = NVL of oracle 
         from sections s
         left join artifacts a on s.artifact_id = a.artifact_id
         left join categories cat on a.category_id = cat.category_id
@@ -684,7 +688,7 @@ user_preferences as (
     select
         a.category_id,
         avg((a.start_year + a.end_year) / 2.0) as avg_year,
-        count(*) as category_weight
+        count(*) as category_total
     from user_history uh
     join artifacts a on uh.artifact_id = a.artifact_id
     where a.start_year is not null and a.end_year is not null
@@ -717,7 +721,7 @@ where a.start_year is not null
         and s.artifact_id = a.artifact_id
   )
 order by
-    up.category_weight desc,
+    up.category_total desc,
     era_diff asc
 limit 5;
 

@@ -108,7 +108,6 @@ router.get("/", authorization, async (req , res)=>{
         const end = Number(req.query.end);
         if (Number.isFinite(start) && Number.isFinite(end)) {
             values.push(start, end);
-            // Keep artifacts with missing year metadata instead of filtering them out entirely.
             filters += ` AND (start_year IS NULL OR start_year >= $${values.length - 1}) AND (end_year IS NULL OR end_year <= $${values.length})`;
         }
 

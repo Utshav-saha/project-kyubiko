@@ -103,6 +103,8 @@ router.get("/data", authorization, async (req, res) => {
             [quiz.quiz_id]
         );
 
+        // prottek 4 option er sathe same ques - so map 
+
         const map = new Map();
         for (const row of questionRows.rows) {
             if (!map.has(row.question_id)) {
@@ -125,6 +127,7 @@ router.get("/data", authorization, async (req, res) => {
             }
         }
 
+        // map to array of ques objects
         const questions = Array.from(map.values()).map((q) => ({
             ...q,
             options: [...q.options, "", "", ""].slice(0, 4),
@@ -229,15 +232,8 @@ router.post("/add-question", authorization, async (req, res) => {
             return res.status(403).json("Only Manager Authorized");
         }
         
-        const {
-            quiz_id,
-            question_text,
-            image_url,
-            options,
-            correct_option,
-            description,
-            question_description,
-        } = req.body;
+        const {quiz_id,question_text,image_url,options,correct_option,description,question_description,} = req.body;
+        const final_description = question_description ?? description ?? null;
         if (!quiz_id || !question_text || !options || correct_option === undefined) {
             return res.status(400).json("Missing required fields");
         }
@@ -265,11 +261,10 @@ router.post("/add-question", authorization, async (req, res) => {
             }
         }
         
-        const normalizedDescription = description ?? question_description ?? null;
 
         const new_question = await client.query(
             `CALL create_ques_ops($1, $2, $3, $4, $5, $6, $7)`,
-            [quiz_id, question_text, options, correct_option, final_image_url, normalizedDescription, null]
+            [quiz_id, question_text, options, correct_option, final_image_url, final_description, null]
         );
         const ques_id = new_question.rows[0].p_question_id;
 
@@ -292,15 +287,8 @@ router.put("/edit-question", authorization, async (req, res) => {
             return res.status(403).json("Only Manager Authorized");
         }
         
-        const {
-            question_id,
-            question_text,
-            image_url,
-            options,
-            correct_option,
-            description,
-            question_description,
-        } = req.body;
+        const {question_id,question_text,image_url,options,correct_option,description,question_description,} = req.body;
+        const final_description = question_description ?? description ?? null;
         if (!question_id || !question_text || !options || correct_option === undefined) {
             return res.status(400).json("Missing required fields");
         }
@@ -323,15 +311,13 @@ router.put("/edit-question", authorization, async (req, res) => {
         );
         const oldImage = oldImageRes.rows[0]?.image_url;
 
-        const normalizedDescription = description ?? question_description ?? null;
-
         await client.query(
             `UPDATE questions
              SET question_text = $1,
                  image_url = $2,
                  question_description = $3
              WHERE question_id = $4`,
-            [question_text, image_url || null, normalizedDescription, question_id]
+            [question_text, image_url || null, final_description, question_id]
         );
 
         await client.query(

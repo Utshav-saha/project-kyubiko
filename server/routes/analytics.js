@@ -2,18 +2,20 @@ const router = require("express").Router();
 const pool = require("../db");
 const authorization = require("../middleware/authorization");
 
-const getUserIdFromReq = (req) => req.user?.id || req.user;
+const get_user = (req) => req.user?.id || req.user;
 
-const ensureManager = async (req) => {
+const check_manager = async (req) => {
     if (req.user?.role) {
         return req.user.role === "manager";
     }
 
-    const user_id = getUserIdFromReq(req);
+    const user_id = get_user(req);
     if (!user_id) return false;
 
     const roleRes = await pool.query(
-        `SELECT role FROM users WHERE user_id = $1 LIMIT 1`,
+        `SELECT role FROM users 
+        WHERE user_id = $1 
+        LIMIT 1`,
         [user_id]
     );
 
@@ -23,12 +25,12 @@ const ensureManager = async (req) => {
 
 router.get("/museum/distribution", authorization, async (req, res) => {
     try {
-        const isManager = await ensureManager(req);
+        const isManager = await check_manager(req);
         if(!isManager){
             return res.status(403).json("Only Manager Authorized");
         }
 
-        const user_id = getUserIdFromReq(req);
+        const user_id = get_user(req);
 
         const museumRes = await pool.query(`
             SELECT museum_id 
@@ -60,12 +62,12 @@ router.get("/museum/distribution", authorization, async (req, res) => {
 
 router.get("/museum/engagement", authorization, async (req, res) => {
     try {
-        const isManager = await ensureManager(req);
+        const isManager = await check_manager(req);
         if(!isManager){
             return res.status(403).json("Only Manager Authorized");
         }
 
-        const user_id = getUserIdFromReq(req);
+        const user_id = get_user(req);
 
         const museumRes = await pool.query(`
             SELECT museum_id 

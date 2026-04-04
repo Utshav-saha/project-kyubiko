@@ -229,7 +229,7 @@ export default function Search() {
   const toggleWishlist = () => {
     setWishlistVisible((prev) => !prev);
   };
-
+ 
   return (
     <>
       {/* dual slider styles */}
@@ -322,7 +322,7 @@ export default function Search() {
                 )}
               </ul>
             </div>
-            <a className="btn btn-ghost text-xl text-white ml-2">Kyubiku</a>
+            <a className="btn btn-ghost text-xl text-white ml-2">Kyubiko</a>
           </div>
           <div className="navbar-center hidden lg:flex">
             <ul className="menu menu-horizontal px-1 gap-5 text-white">

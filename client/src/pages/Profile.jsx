@@ -377,11 +377,22 @@ export default function Profile() {
           <div className="navbar-center hidden lg:flex">
             <ul className="menu menu-horizontal px-1 gap-2 text-white/80 font-medium">
               <li>
-                <Link
-                  to="/my-museums"
-                  className="hover:text-white hover:bg-white/10 rounded-lg transition-colors"                >
-                  My Museums
-                </Link>
+                {userRole === "curator" && (
+                  <Link
+                    to="/my-museums"
+                    className="hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    My Museums
+                  </Link>
+                )}
+                {userRole === "manager" && (
+                  <Link
+                    to="/manager-dashboard"
+                    className="hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    Museum
+                  </Link>
+                )}
               </li>
               <li>
                 <Link

@@ -22,7 +22,7 @@ router.post("/register", async(req, res)=>{
             return res.status(401).json("User already exists");
         }
 
-        const saltRound = 10;
+        const saltRound = 10; // 10 rounds of bcrypt hashing
         const salt = await bcrypt.genSalt(saltRound);
         const bcryptPass = await bcrypt.hash(pass,salt);
 

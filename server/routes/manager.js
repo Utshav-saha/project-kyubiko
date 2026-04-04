@@ -13,8 +13,8 @@ cloudinary.config({
 const delete_clound = async (url) => {
 	if (!url || !url.includes("cloudinary.com")) return;
 	try {
-		// Example URL: https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg
-		// We need "sample" ( publicId) to delete it
+		// https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg
+		// we need "sample" ( publicId) to delete it
 		const parts = url.split("/");
 		const last_part = parts[parts.length - 1];
 		const publicId = last_part.split(".")[0];
@@ -239,15 +239,7 @@ router.put("/artifact/:id", authorization, async (req, res) => {
 		}
 
 		const artifactId = req.params.id;
-		const {
-			artifact_name,
-			description,
-			creator,
-			time_period,
-			origin,
-			picture_url,
-			category_name,
-		} = req.body;
+		const {artifact_name,description,creator,time_period,origin,picture_url,category_name,} = req.body;
 
 		await client.query("BEGIN");
 
@@ -380,15 +372,7 @@ router.post("/add", authorization, async (req, res) => {
 			return res.status(404).json({ error: "No museum assigned to this manager" });
 		}
 		
-		const {
-			artifact_name,
-			description,
-			creator,
-			time_period,
-			origin,
-			picture_url,
-			category_name
-		} = req.body;
+		const {artifact_name,description,creator,time_period,origin,picture_url,category_name} = req.body;
 
 		await client.query("BEGIN");
 
@@ -434,18 +418,7 @@ router.post("/create", authorization, async (req, res) => {
 		}
 
 		const user_id = req.user?.id || req.user;
-		const {
-			museum_name,
-			description,
-			picture_url,
-			location_id,
-			category,
-			open_days,
-			city,
-			country,
-			latitude,
-			longitude,
-		} = req.body;
+		const {museum_name,description,picture_url,location_id,category,open_days,city,country,latitude,longitude,} = req.body;
 
 		await client.query("BEGIN");
 
@@ -463,13 +436,13 @@ router.post("/create", authorization, async (req, res) => {
 		}
 
 		const parsedLat = parseCoordinate(latitude);
-const parsedLon = parseCoordinate(longitude);
+		const parsedLon = parseCoordinate(longitude);
 
-const loc_res = await client.query(
-    `SELECT get_location_id($1, $2, $3, $4, $5) AS location_id`,
-    [location_id || null, city, country, parsedLat, parsedLon]
-);
-const res_loc_id = loc_res.rows[0].location_id;
+		const loc_res = await client.query(
+    		`SELECT get_location_id($1, $2, $3, $4, $5) AS location_id`,
+    		[location_id || null, city, country, parsedLat, parsedLon]
+			);
+		const res_loc_id = loc_res.rows[0].location_id;
 
 		if (!res_loc_id) {
 			await client.query("ROLLBACK");
@@ -480,15 +453,7 @@ const res_loc_id = loc_res.rows[0].location_id;
 			`INSERT INTO museums (museum_name, description, picture_url, location_id, category, open_days, manager_id)
 			 VALUES ($1, $2, $3, $4, $5, $6, $7)
 			 RETURNING museum_id`,
-			[
-				museum_name,
-				description,
-				picture_url,
-				res_loc_id,
-				category,
-				open_days,
-				user_id,
-			]
+			[museum_name,description,picture_url,res_loc_id,category,open_days,user_id,]
 		);
 
 		// returning na dile abar select kora lagbe
