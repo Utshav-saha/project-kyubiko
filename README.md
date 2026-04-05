@@ -427,7 +427,7 @@ In the **Tours** Page, managers can create new tours, manage existing ones, and 
 
 In the **Profile** Page, they can view their Museum's performance with visual analytics and dashboard metrics.
 
-![Image](https://res.cloudinary.com/djiuqhg6i/image/upload/v1775403888/Image_4-5-26_at_9.44_PM_rterpd.png)
+![Image](https://res.cloudinary.com/djiuqhg6i/image/upload/v1775407749/Image_4-5-26_at_10.48_PM_ilggo2.png)
 
 The **Explore** and **Search** page are similar to the User's side.
 
