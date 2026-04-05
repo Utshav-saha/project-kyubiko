@@ -3,12 +3,11 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 6543;
+const PORT = process.env.PORT || 8888;
 
 app.use(cors());
 app.use(express.json());
 
-// Vercel rewrite keeps /api prefix; strip it so existing route mounts still work.
 if (process.env.VERCEL) {
 	app.use((req, _res, next) => {
 		if (req.url === '/api') req.url = '/';
