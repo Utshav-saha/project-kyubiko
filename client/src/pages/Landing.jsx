@@ -14,21 +14,21 @@ const Landing = () => {
   const slides = [
     {
       id: 1,
-      image: "/colosseum.svg",
+      image: "https://res.cloudinary.com/djiuqhg6i/image/upload/v1775405618/colosseum_jkslzu.svg",
       title: "Colosseum, Rome, Italy",
       text: "Uncover the secrets of the gladiators at the Roman Colosseum.",
       bgColor: "bg-[#FFE55C]",
     },
     {
       id: 2,
-      image: "/pyramid.svg",
+      image: "https://res.cloudinary.com/djiuqhg6i/image/upload/v1775405619/Pyramid_mlik5w.svg",
       title: "Pyramids, Egypt",
       text: "Explore the City of Pharaohs and the ancient pyramids of Giza.",
       bgColor: "bg-[#FF7043]",
     },
     {
       id: 3,
-      image: "/taj.svg",
+      image: "https://res.cloudinary.com/djiuqhg6i/image/upload/v1775405619/taj_re7cfc.svg",
       title: "Taj Mahal, India",
       text: "An immense mausoleum of white marble, built in Agra between 1631 and 1648.",
       bgColor: "bg-[#4DB6AC]",
@@ -206,7 +206,7 @@ const Landing = () => {
             <div className="relative w-full lg:w-1/2 max-w-125 h-100 lg:h-125">
               <div className="hero-img-left absolute top-10 left-10 w-48 max-h-40 bg-[#FFE55C] flex items-end justify-center shadow-lg z-10">
                 <img
-                  src="/woman.png"
+                  src="https://res.cloudinary.com/djiuqhg6i/image/upload/v1775405672/woman_d7wyfu.png"
                   alt="Statue Woman"
                   className="w-[130%] max-w-none h-auto -mt-24 object-cover object-top grayscale contrast-125 drop-shadow-lg"
                 />
@@ -214,7 +214,7 @@ const Landing = () => {
 
               <div className="hero-img-right absolute bottom-15 right-10 lg:right-20 w-44 h-32 bg-[#FF7043] flex items-end justify-center shadow-lg z-20">
                 <img
-                  src="/head.png"
+                  src="https://res.cloudinary.com/djiuqhg6i/image/upload/v1775405670/head_r4ftmz.png"
                   alt="Statue Man"
                   className="w-full max-w-none h-auto -mt-20 object-cover object-top grayscale contrast-125 drop-shadow-lg"
                 />
@@ -345,7 +345,7 @@ const Landing = () => {
 
                     <div className="absolute -top-20 -right-6 w-56 z-20 drop-shadow-2xl hover:scale-105 transition-transform duration-500">
                       <img
-                        src="/axe.png"
+                        src="https://res.cloudinary.com/djiuqhg6i/image/upload/v1775405668/axe_bxkr9o.png"
                         alt="Viking Axe"
                         className="axe-anim w-full h-72 object-contain rotate-15 contrast-125"
                       />
@@ -370,7 +370,7 @@ const Landing = () => {
                     <div className="absolute -top-24 -right-8 w-72 z-20 drop-shadow-2xl hover:scale-105 transition-transform duration-500">
                       {/* Added class: horse-anim */}
                       <img
-                        src="/horse.png"
+                        src="https://res.cloudinary.com/djiuqhg6i/image/upload/v1775405671/horse_h1gdc7.png"
                         className="horse-anim w-full h-auto object-contain"
                         alt="Roman Horse"
                       />
@@ -451,7 +451,7 @@ const Landing = () => {
             <div className="misc-grid-item border border-dashed border-brown rounded-2xl p-4 flex justify-center items-center overflow-hidden ">
               <img
                 className="h-full w-full object-contain transition-transform duration-300 hover:scale-110 cursor-pointer"
-                src="/boy2.png"
+                src="https://res.cloudinary.com/djiuqhg6i/image/upload/v1775405670/boy2_o41780.png"
                 alt="Boy"
               />
             </div>
@@ -468,7 +468,7 @@ const Landing = () => {
               <div className="h-full flex justify-center items-center overflow-hidden">
                 <img
                   className="max-h-30 w-auto object-contain transition-transform duration-300 hover:scale-110 cursor-pointer"
-                  src="/scar.png"
+                  src="https://res.cloudinary.com/djiuqhg6i/image/upload/v1775405671/scar_fdpoah.png"
                   alt="Scar"
                 />
               </div>
@@ -477,7 +477,7 @@ const Landing = () => {
             <div className="misc-grid-item col-span-1 lg:col-span-2 row-span-1 lg:row-span-2 border border-dashed border-brown rounded-2xl p-4 flex justify-center items-center overflow-hidden ">
               <img
                 className="h-full w-full object-contain transition-transform duration-300 hover:scale-110 cursor-pointer"
-                src="/dinosaur.png"
+                src="https://res.cloudinary.com/djiuqhg6i/image/upload/v1775405672/dinosaur_wqxxmt.png"
                 alt="Dinosaur"
               />
             </div>
@@ -485,7 +485,7 @@ const Landing = () => {
             <div className="misc-grid-item border border-dashed border-brown rounded-2xl p-4 flex justify-center items-center overflow-hidden ">
               <img
                 className="h-full w-full object-contain transition-transform duration-300 hover:scale-110 cursor-pointer"
-                src="/standing.png"
+                src="https://res.cloudinary.com/djiuqhg6i/image/upload/v1775405672/standing_lr4kvh.png"
                 alt="Standing"
               />
             </div>
@@ -507,7 +507,7 @@ const Landing = () => {
               <div className="absolute z-0 w-2/3 h-3/5 bg-[#4DB6AC] rounded-xl transform translate-y-3 shadow-sm"></div>
               <img
                 className="relative z-10 h-full w-auto object-contain transition-transform duration-300 hover:scale-110 cursor-pointer drop-shadow-md"
-                src="/angel.png"
+                src="https://res.cloudinary.com/djiuqhg6i/image/upload/v1775405670/angel_tahqbh.png"
                 alt="Angel"
               />
             </div>
